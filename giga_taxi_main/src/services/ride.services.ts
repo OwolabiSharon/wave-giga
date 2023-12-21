@@ -1,0 +1,170 @@
+import TaxiModel from '../models/taxiMain.model';
+import Ride from '../models/ride.model';
+import httpStatus from 'http-status';
+import Rabbit from '../rabbitMq/setup';
+import ApiError from '../utils/ApiError';
+import tomtomApi from './tomtomApi.services';
+import rideConfig from '../config/ride.config';
+const rabbit = new Rabbit();
+
+
+
+const requestRide = async (data: any) => {
+    const {
+        driverId,
+        driverUserId,
+        driverType,
+        customerId,
+        customerUserId,
+        pickupLocation,
+        dropOffLocation
+    } = data
+    const rideData = {
+        driverId,
+        driverUserId,
+        customerId,
+        customerUserId,
+        status: "pending",
+        pickupLocation,
+        dropOffLocation,
+        rideType: driverType
+      };
+    
+    try {
+        const customer = await TaxiModel.findOne({ _id: customerId});
+        
+        
+        if(customer)
+        {
+          
+          const ride = await Ride.create(rideData);
+          customer.requestedRide = ride._id
+          customer.save()
+
+          rabbit.publishMessage('GetRideOffer', rideData);
+          const data = (await rabbit.consumeMessage('GetRideOfferResponse')) as any
+          
+          ride.distance = data.distance
+          ride.driverArrivalEta = data.arrivalEta
+          ride.rideEta = data.rideEta
+          const estimatedFee = await calculateRideFee(driverType,3,data.distance )
+          ride.estimatedFee = estimatedFee
+          
+          ride.save()
+          
+          
+          return ride
+        }
+        
+    } 
+    catch (error) {
+        console.log(error)
+        throw new ApiError(httpStatus.BAD_REQUEST, 'Something went wrong');
+    }
+};
+
+const calculateRideFee = async (rideType: any, fuelPricePerLiter: any, distanceInTomTom: any) => {
+    const feePerKm = rideConfig.feePerKm[rideType.toLowerCase()];
+    if (feePerKm === undefined) {
+      throw new Error(`Invalid ride type: ${rideType}`);
+    }
+  
+    // Calculate fee based on ride type and fuel price
+    const rideFeeBasedOnFuel = feePerKm * fuelPricePerLiter;
+  
+    // Convert TomTom distance to kilometers
+    const distanceInKm = distanceInTomTom / 1000;
+  
+    // Calculate total fee based on ride fee and distance
+    const totalFee = rideFeeBasedOnFuel * distanceInKm;
+  
+    return totalFee;
+  }
+
+
+
+const sortLocationData = async(data: any) =>
+{
+    if (typeof data === 'string') {
+      try {
+        const location = await tomtomApi.geocodeAddress(data)
+        return location
+      } catch (error) {
+        console.log(error)
+        return data
+      }
+        
+        // Code to execute when data.pickupLocation is a string
+      } else {
+        return data
+      }
+} 
+
+const getClosestDrivers = async(data: any) => 
+{
+    const location = data.pickupLocation
+    console.log(location,data.pickupLocation );
+    
+    const requestPayload = {
+        location,
+        // Optionally add ride preferences if available
+        ridePreferences: data.ridePreferences ? data.ridePreferences : undefined,
+      };
+    
+    rabbit.publishMessage('getClosestDrivers', requestPayload);
+    try {
+      const drivers = await rabbit.consumeMessage('getClosestDriversResponse');
+      return drivers
+    } catch (error) {
+      console.log(error);
+      return "error occured"
+    }
+    
+}
+ 
+const rateDriver = async(data: any) => 
+{  
+    rabbit.publishMessage('rateUser', {userId: data.driverUserId, rating: data.rating});
+    return {message: "Rated"}
+}
+
+const createTaxiAccount = async (data: any) => {
+    if (await TaxiModel.isUserTaken(data.userID)) {
+        throw new ApiError(httpStatus.BAD_REQUEST, 'User already has a taxi driver account');
+    }
+
+    const taxiData = {
+      user: data.userID,
+      phoneNumber: data.phoneNumber,
+    };
+    try {
+      const customer = await TaxiModel.create(taxiData);
+      rabbit.publishMessage('createTaxiProfile', {accountInfo: customer, type: "TaxiCustomer"});
+      return customer
+    } catch (error) {
+      console.log(error);
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Something went wrong and it was your fault, BAD_REQUEST');
+    }
+    
+};
+
+const payTaxiFee = async (data: any) => {
+  try {
+    const taxiCustomer = await TaxiModel.findById(data.id).populate('user');
+    rabbit.publishMessage('payFee', {token: data.token, amount: data.amount, narration: data.narration});
+    return taxiCustomer;
+  } catch (error) {
+    console.error('Error fetching TaxiCustomer:', error);
+    return null;
+  }
+};
+
+export default {
+    getClosestDrivers,
+    requestRide,
+    rateDriver,
+    createTaxiAccount,
+    payTaxiFee
+  };
+
+  
