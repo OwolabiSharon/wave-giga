@@ -1,10 +1,12 @@
 import { Request, Response } from 'express';
 import httpStatus from 'http-status';
-import productService from 'src/services/product.service';
+import productService from '../services/product.service';
+import ProductSchema from '../validations/products.model.zod';
 
 class productController {
     async create(req: Request, res: Response) {
-        const product = await productService.create(req.body);
+        //use zod to validate req.body and then create product
+        const product = await productService.create(ProductSchema.parse(req.body));
         res.status(httpStatus.CREATED).send(product);
     }
     
@@ -24,3 +26,5 @@ class productController {
     }
 
 }
+
+export default new productController();

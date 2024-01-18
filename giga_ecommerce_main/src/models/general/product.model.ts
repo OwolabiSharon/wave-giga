@@ -35,10 +35,9 @@ const productSchema = new Schema<IProduct>({
     productPrice: { type: Number, required: true },
     productAmountInStock: { type: Number, required: true },
     //create section for product rating and set default to 0
-    productRating: { type: Number, required: true, default: 0 },
+    productRating: { type: Number, default: 0 },
     productFulfilmentTime: { type: Number, required: true},
-    productReviews: [{ type: Schema.Types.ObjectId, ref: 'Review', required: true , default: []}],
-    
+    productReviews: [{ type: Schema.Types.ObjectId, ref: 'Review' , default: []}],
 },
 {
     timestamps: true,

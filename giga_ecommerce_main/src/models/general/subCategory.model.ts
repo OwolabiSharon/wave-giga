@@ -15,7 +15,7 @@ const subCategorySchema = new Schema<ISubCategory>({
     subCategoryName: { type: String, required: true },
     subCategoryDescription: { type: String, required: true },
     subCategoryImage: { type: String, required: true },
-    subCategoryProducts: [{ type: Schema.Types.ObjectId, ref: 'Product', required: true , default: []}],
+    subCategoryProducts: [{ type: Schema.Types.ObjectId, ref: 'Product', default: []}],
     
 },
 {
