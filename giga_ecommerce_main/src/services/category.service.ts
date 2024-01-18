@@ -3,33 +3,99 @@ import ApiError from '../utils/ApiError';
 import httpStatus from 'http-status';
 
 const create = async (categoryBody: any) => {
-    //check if category already exists
-    if (Category.isCategoryTaken(categoryBody.categoryName)) {
-        throw new ApiError(httpStatus.BAD_REQUEST, 'Category already taken');
+    try {
+        // Check if category name is provided
+        if (!categoryBody || !categoryBody.categoryName) {
+            return { statusCode: httpStatus.BAD_REQUEST, message: 'Category name is required' };
+        }
+
+        // Check if category already exists
+        const isCategoryTaken = await Category.isCategoryTaken(categoryBody.categoryName);
+        if (isCategoryTaken) {
+            throw new ApiError(httpStatus.BAD_REQUEST, 'Category name is required');
+        }
+
+        // Check if categoryBody has valid properties
+        const validProperties = ['categoryName', 'categoryDescription', 'categoryImage'];
+        const isValidBody = validProperties.every(prop => categoryBody.hasOwnProperty(prop));
+
+        if (!isValidBody) {
+            return { statusCode: httpStatus.BAD_REQUEST, message: 'Invalid category body' };
+        }
+
+        // Create the category
+        const createdCategory = await Category.create(categoryBody);
+
+        // Check if the category was created successfully
+        if (createdCategory) {
+            return { statusCode: httpStatus.OK, category: createdCategory, message: 'Category created' };
+        } else {
+            return { statusCode: httpStatus.INTERNAL_SERVER_ERROR, message: 'Failed to create category' };
+        }
+    } catch (error) {
+        // Handle any unexpected errors
+        return { statusCode: httpStatus.INTERNAL_SERVER_ERROR, message: 'Internal Server Error' };
     }
-    const category = await Category.create(categoryBody);
-    //return category and send back response that the category has been created
-    return {category, message: 'Category created'};
 };
 
 const findAll = async () => {
-    const categories = await Category.find();
-    // if the array is empty, send back response that no categories exist not an error 404 
-    if (categories.length === 0) {
-        return {message: 'No categories exist'};
+    try {
+        const categories = await Category.find();
+
+        // Case: No categories exist
+        if (categories.length === 0) {
+            return { message: 'No categories exist' };
+        }
+
+        // Case: Categories exist
+        return categories;
+    } catch (error:any) {
+        // Handle unexpected errors
+        console.error(error);
+        // Case: MongoDB error
+        if (error.name === 'MongoError') {
+            throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'MongoDB Error');
+        }
+        // Case: Other unexpected errors
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Internal Server Error');
     }
-    return categories;
 };
 
-const findOne = async (categoryName: string)=> {
-    const category = await Category.findOne({categoryName});
-    if (!category) {
-        throw new ApiError(httpStatus.NOT_FOUND, 'Category not found');
+const findOne = async (categoryName: string) => {
+    try {
+        const category = await Category.findOne({ categoryName });
+
+        if (!category) {
+            throw new ApiError(httpStatus.NOT_FOUND, 'Category not found');
+        }
+
+        return category;
+    } catch (error: any) {
+        // Handle unexpected errors
+        console.error(error);
+
+        // Case: MongoDB error
+        if (error.name === 'MongoError') {
+            throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'MongoDB Error');
+        }
+
+        // Case: Other unexpected errors
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Internal Server Error');
     }
-    return category;
 };
+
 
 const deleteOne = async (categoryName: string) => {
+    //if there is no value in the category variable then return a response with a message and 404 status code no category has been passed in
+    if (!categoryName || categoryName.trim() === '') {
+        return {
+            statusCode: 400,
+            isOperational: true,
+            status: 'fail',
+            message: 'Category name is required'
+        };
+    }
+
     const category = await findOne(categoryName);
 
     if (!category) {
@@ -86,10 +152,46 @@ const deleteMultiple = async (categoryNames: string[]) => {
     };
 }
 
+const update = async (categoryName: string, updatedData: any) => {
+    try {
+        // Find the category to update
+        const category = await Category.findOne({ categoryName });
+
+        // If the category doesn't exist, throw a 404 error
+        if (!category) {
+            throw new ApiError(httpStatus.NOT_FOUND, 'Category not found');
+        }
+
+        // Update the category with the new data
+        Object.assign(category, updatedData);
+        
+        // Save the updated category to the database
+        await category.save();
+
+        // Return the updated category
+        return { statusCode: httpStatus.OK, category, message: 'Category updated successfully' };
+    } catch (error: any) {
+        // Handle unexpected errors
+        console.error(error);
+
+        // Case: MongoDB error
+        if (error.name === 'MongoError') {
+            throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'MongoDB Error');
+        }
+
+        // Case: Other unexpected errors
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Internal Server Error');
+    }
+};
+
+
+
+
 export default {
     create,
     findAll,
     findOne,
     deleteOne,
-    deleteMultiple
+    deleteMultiple,
+    update,
 };

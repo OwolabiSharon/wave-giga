@@ -44,6 +44,28 @@ class categoryController {
             res.status(httpStatus.BAD_REQUEST).send(error);
         }
     }
+
+    async deleteMultipleCategories(req: Request, res: Response) {
+        try {
+            const categoryBody = CategoryZod.deleteMultipleSchema.parse(req.body);
+            const category = await categoryService.deleteMultiple(categoryBody.categoryNames);
+            res.status(httpStatus.OK).send(category);
+        } catch (error) {
+            res.status(httpStatus.BAD_REQUEST).send(error);
+        }
+    }
+
+    async updateCategory(req: Request, res: Response) {
+        try {
+            const categoryBody = CategoryZod.updateCategorySchema.parse(req.body);
+            const category = await categoryService.update(categoryBody.categoryName, categoryBody);
+            res.status(httpStatus.OK).send(category);
+        } catch (error) {
+            res.status(httpStatus.BAD_REQUEST).send(error);
+        }
+    }
+
+
 }
 
 export default new categoryController();
