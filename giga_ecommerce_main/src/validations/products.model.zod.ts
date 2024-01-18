@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const ProductSchema = z.object({
+const createProductSchema = z.object({
     vendor: z.string(),
     shop: z.string(),
     productName: z.string(),
@@ -15,11 +15,35 @@ const ProductSchema = z.object({
 });
 
 const ProductFufilmentSchema = z.object({
-    vendor: z.string(),
+    vendorId: z.string(),
     shop: z.string(),
     productName: z.string(),
     productFufilmentTime: z.number(),
 });
 
+const ProductRestockSchema = z.object({
+    vendorId: z.string(),
+    shop: z.string(),
+    productName: z.string(),
+    productAmountInStock: z.number(),
+});
+
+const ProductDeleteSchema = z.object({
+    vendorId: z.string(),
+    shop: z.string(),
+    productName: z.string(),
+});
+
+const ProductFindSchema = z.object({
+    productName: z.string(),
+});
+
+
 //export zod schema
-export default ProductSchema;
+export default {
+    createProductSchema,
+    ProductFufilmentSchema,
+    ProductRestockSchema,
+    ProductDeleteSchema,
+    ProductFindSchema,
+};

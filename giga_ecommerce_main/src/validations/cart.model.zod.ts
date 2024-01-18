@@ -12,6 +12,37 @@ const CartSchema = z.object({
     createdAt: z.date(),
 });
 
-export type Cart = z.infer<typeof CartSchema>;
+const addToCartSchema = z.object({
+    userId: z.string(),
+    productId: z.string(),
+    quantity: z.number().positive(),
+});
 
-export default CartSchema;
+const removeFromCartSchema = z.object({
+    userId: z.string(),
+    productId: z.string(),
+    quantity: z.number().positive(),
+});
+
+const updateCartSchema = z.object({
+    userId: z.string(),
+    productId: z.string(),
+    quantity: z.number().positive(),
+});
+
+const getCartSchema = z.object({
+    userId: z.string(),
+});
+
+const deleteCartSchema = z.object({
+    userId: z.string(),
+});
+
+export default {
+    CartSchema,
+    addToCartSchema,
+    removeFromCartSchema,
+    updateCartSchema,
+    getCartSchema,
+    deleteCartSchema,
+};

@@ -6,7 +6,8 @@ import ProductSchema from '../validations/products.model.zod';
 class productController {
     async create(req: Request, res: Response) {
         //use zod to validate req.body and then create product
-        const product = await productService.create(ProductSchema.parse(req.body));
+        const productBody = ProductSchema.createProductSchema.parse(req.body);
+        const product = await productService.create(productBody);
         res.status(httpStatus.CREATED).send(product);
     }
     

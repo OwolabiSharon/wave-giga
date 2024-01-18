@@ -9,7 +9,7 @@ export interface ICategory extends Document {
 }
 
 interface ICategoryModel extends Model<ICategory> {
-    
+    isCategoryTaken(categoryName: string): boolean;
 }
 
 const categorySchema = new Schema<ICategory>({
@@ -23,6 +23,11 @@ const categorySchema = new Schema<ICategory>({
 {
     timestamps: true,
 });
+
+categorySchema.statics.isCategoryTaken = async function (categoryName: string) {
+    const category = await this.findOne({ categoryName });
+    return !!category;
+};
 
 const Category = model<ICategory, ICategoryModel>('Category', categorySchema);
 
