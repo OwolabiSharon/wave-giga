@@ -15,12 +15,14 @@ export interface IProduct extends Document {
     productRating: number;
     productFulfilmentTime: number;
     productReviews: Types.ObjectId[];
+    score?: number;
 
 }
 
 interface IProductModel extends Model<IProduct> {
     averageRating(productId: Types.ObjectId): Promise<number>;
     searchByText(query: string): Promise<IProduct[]>;
+    findByCategory(productCategory: string): Promise<IProduct[]>;
 }
 
 const productSchema = new Schema<IProduct>({
@@ -42,6 +44,11 @@ const productSchema = new Schema<IProduct>({
 {
     timestamps: true,
 });
+
+//find by category
+productSchema.statics.findByCategory = async function (productCategory: string): Promise<IProduct[]> {
+    return await this.find({ productCategory });
+};
 
 productSchema.statics.averageRating = async function (productId: Types.ObjectId): Promise<number> {
     const reviews = await Review.find({ productId });
