@@ -9,6 +9,10 @@ router.post('/', CategoryController.createCategory);
 router.delete('/', CategoryController.deleteCategory);
 router.delete('/multiple', CategoryController.deleteMultipleCategories);
 router.put('/', CategoryController.updateCategory);
+router.post('/add-subcategory', CategoryController.addSubCategory);
+router.delete('/remove-subcategory', CategoryController.removeSubCategory);
+router.post('/add-product', CategoryController.addProduct);
+router.delete('/remove-product', CategoryController.removeProduct);
 
 
 

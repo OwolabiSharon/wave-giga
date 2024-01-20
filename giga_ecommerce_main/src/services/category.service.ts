@@ -1,4 +1,5 @@
 import Category from "../models/general/category.model";
+import Product from "../models/general/product.model";
 import subCategory from "../models/general/subCategory.model";
 import ApiError from '../utils/ApiError';
 import httpStatus from 'http-status';
@@ -349,6 +350,169 @@ const removeSubCategory = async (categoryName: any, subCategoryName: any) => {
 
 }
 
+const addProduct = async (categoryName: any, productName: any ,vendorId:any) => {
+    //check if the CategoryNam and productName are ObjectsIds or not, if they are not then convert them to ObjectIds
+    if (typeof categoryName !== 'object') {
+        categoryName = Category.getCategoryObjectId(categoryName);
+        //if the categoryName is null then return a response with a message and 404 status code
+        if (!categoryName) {
+            return {
+                statusCode: 404,
+                isOperational: true,
+                status: 'fail',
+                message: 'Category not found'
+            };
+        }
+        //if the category does not exist then return a response with a message and 404 status code
+        if (!categoryName) {
+            return {
+                statusCode: 404,
+                isOperational: true,
+                status: 'fail',
+                message: 'Category not found'
+            };
+        }
+    }
+
+    if (typeof productName !== 'object') {
+        productName = await Product.getProductObjectId(productName, vendorId);
+        //if the productName is null then return a response with a message and 404 status code
+        if (!productName) {
+            return {
+                statusCode: 404,
+                isOperational: true,
+                status: 'fail',
+                message: 'Product not found'
+            };
+        }
+        //if the product does not exist then return a response with a message and 404 status code
+        if (!productName) {
+            return {
+                statusCode: 404,
+                isOperational: true,
+                status: 'fail',
+                message: 'Product not found'
+            };
+        }
+    }
+
+    //check if the product is already in the category
+    const productInCategory = Category.isProductInCategory(categoryName, productName);
+    //if the product is already in the category then return a response with a message and 404 status code
+    if (productInCategory) {
+        return {
+            statusCode: 404,
+            isOperational: true,
+            status: 'fail',
+            message: 'Product already in category'
+        };
+    }
+
+    try{
+        //add the product to the category
+        await Category.updateOne({ _id: categoryName }, { $push: { categoryProducts: productName } });
+        //return a response with a message and 200 status code
+        return {
+            statusCode: 200,
+            isOperational: true,
+            status: 'success',
+            message: 'Product added to category'
+        };
+    }catch(err){
+        //return a response with a message and 500 status code
+        console.error(err);
+        return {
+            statusCode: 500,
+            isOperational: true,
+            status: 'fail',
+            //send message with the error
+            message: err
+        };
+    
+    }
+
+}
+
+const removeProduct = async (categoryName: any, productName: any, vendorId: any) => {
+    //check if the CategoryNam and productName are ObjectsIds or not, if they are not then convert them to ObjectIds
+    if (typeof categoryName !== 'object') {
+        categoryName = Category.getCategoryObjectId(categoryName);
+        //if the categoryName is null then return a response with a message and 404 status code
+        if (!categoryName) {
+            return {
+                statusCode: 404,
+                isOperational: true,
+                status: 'fail',
+                message: 'Category not found'
+            };
+        }
+        //if the category does not exist then return a response with a message and 404 status code
+        if (!categoryName) {
+            return {
+                statusCode: 404,
+                isOperational: true,
+                status: 'fail',
+                message: 'Category not found'
+            };
+        }
+    }
+
+    if (typeof productName !== 'object') {
+        productName = await Product.getProductObjectId(productName, vendorId);
+        //if the productName is null then return a response with a message and 404 status code
+        if (!productName) {
+            return {
+                statusCode: 404,
+                isOperational: true,
+                status: 'fail',
+                message: 'Product not found'
+            };
+        }
+        //if the product does not exist then return a response with a message and 404 status code
+        if (!productName) {
+            return {
+                statusCode: 404,
+                isOperational: true,
+                status: 'fail',
+                message: 'Product not found'
+            };
+        }
+    }
+
+    //check if the product is already in the category
+    const productInCategory = Category.isProductInCategory(categoryName, productName);
+    //if the product is already in the category then return a response with a message and 404 status code
+    if (!productInCategory) {
+        return {
+            statusCode: 404,
+            isOperational: true,
+            status: 'fail',
+            message: 'Product not in category'
+        };
+    }
+
+    try{
+        //remove the product from the category
+        await Category.updateOne({ _id: categoryName }, { $pull: { categoryProducts: productName } });
+        //return a response with a message and 200 status code
+        return {
+            statusCode: 200,
+            isOperational: true,
+            status: 'success',
+            message: 'Product removed from category'
+        };
+    }catch(err){
+        //return a response with a message and 500 status code
+        console.error(err);
+        return {
+            statusCode: 500,
+            isOperational: true,
+            status: 'fail',
+            //send message with the error
+            message: err
+        };
+    }
+}
 export default {
     create,
     findAll,
@@ -357,5 +521,7 @@ export default {
     deleteMultiple,
     update,
     addSubCategory,
-    removeSubCategory
+    removeSubCategory,
+    addProduct,
+    removeProduct
 };

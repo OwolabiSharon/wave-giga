@@ -1,4 +1,4 @@
-import { Document, Model, model, Schema,Types } from 'mongoose';
+import { AnyExpression, Document, Model, model, Schema,Types } from 'mongoose';
 import Review, { IReview } from '../users/reviews.model'; 
 
 export interface IProduct extends Document {
@@ -23,6 +23,7 @@ interface IProductModel extends Model<IProduct> {
     averageRating(productId: Types.ObjectId): Promise<number>;
     searchByText(query: string): Promise<IProduct[]>;
     findByCategory(productCategory: string): Promise<IProduct[]>;
+    getProductObjectId(productName: string, vendorId: Types.ObjectId): Promise<Types.ObjectId[]>;
 }
 
 const productSchema = new Schema<IProduct>({
@@ -70,6 +71,11 @@ productSchema.statics.searchByText = async function (query: string): Promise<IPr
         .exec();
 
     return results;
+};
+
+productSchema.statics.getProductObjectId = async function (productName: string, vendorId: any): Promise<Types.ObjectId[]> {
+    const products = await this.find({ productName, vendor: vendorId });
+    return products.map((product: { _id: any; }) => product._id);
 };
 
 productSchema.pre('save', async function (next) {

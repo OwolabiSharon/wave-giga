@@ -37,6 +37,22 @@ const addSubCategorySchema = z.object({
     subCategoryName: z.string().min(1).max(255),
 });
 
+const removeSubCategorySchema = z.object({
+    categoryName: z.string().min(1).max(255),
+    subCategoryName: z.string().min(1).max(255),
+});
+
+const addProductSchema = z.object({
+    VendorId: z.string().min(1).max(255),
+    productName: z.string().min(1).max(255),
+    categoryName: z.string().min(1).max(255),
+});
+
+const removeProductSchema = z.object({
+    VendorId: z.string().min(1).max(255),
+    productName: z.string().min(1).max(255),
+    categoryName: z.string().min(1).max(255),
+});
 
 
 export default {
@@ -45,5 +61,8 @@ export default {
     findOneSchema,
     deleteOneSchema,
     deleteMultipleSchema,
-    addSubCategorySchema
+    addSubCategorySchema,
+    removeSubCategorySchema,
+    addProductSchema,
+    removeProductSchema,
 };

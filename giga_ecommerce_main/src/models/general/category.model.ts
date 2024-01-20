@@ -13,6 +13,7 @@ interface ICategoryModel extends Model<ICategory> {
     doesCategoryExist(categoryName: string): boolean;
     isSubCategoryInCategory(categoryName: string, subCategoryName: string): boolean;
     getCategoryObjectId(categoryName: string): Types.ObjectId;
+    isProductInCategory(categoryName: string, productName: string): boolean;
 }
 
 const categorySchema = new Schema<ICategory>({
@@ -45,6 +46,11 @@ categorySchema.statics.isSubCategoryInCategory = async function (categoryId: any
 categorySchema.statics.getCategoryObjectId = async function (categoryName: string) {
     const category = await this.findOne({ categoryName });
     return category._id;
+}
+
+categorySchema.statics.isProductInCategory = async function (categoryId: any, productId: any) {
+    const category = await this.findOne({ _id: categoryId, categoryProducts: productId });
+    return !!category;
 }
 
 const Category = model<ICategory, ICategoryModel>('Category', categorySchema);

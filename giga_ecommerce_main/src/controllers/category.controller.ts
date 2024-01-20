@@ -62,6 +62,46 @@ class categoryController {
         }
     }
 
+    async addSubCategory(req: Request, res: Response) {
+        try {
+            const categoryBody = CategoryZod.addSubCategorySchema.parse(req.body);
+            const category = await categoryService.addSubCategory(categoryBody.categoryName, categoryBody.subCategoryName);
+            res.status(httpStatus.OK).send(category);
+        } catch (error) {
+            res.status(httpStatus.BAD_REQUEST).send(error);
+        }
+    }
+
+    async removeSubCategory(req: Request, res: Response) {
+        try {
+            const categoryBody = CategoryZod.removeSubCategorySchema.parse(req.body);
+            const category = await categoryService.removeSubCategory(categoryBody.categoryName, categoryBody.subCategoryName);
+            res.status(httpStatus.OK).send(category);
+        } catch (error) {
+            res.status(httpStatus.BAD_REQUEST).send(error);
+        }
+    }
+
+    async addProduct(req: Request, res: Response) {
+        try {
+            const categoryBody = CategoryZod.addProductSchema.parse(req.body);
+            const category = await categoryService.addProduct(categoryBody.categoryName, categoryBody.productName, categoryBody.VendorId);
+            res.status(httpStatus.OK).send(category);
+        } catch (error) {
+            res.status(httpStatus.BAD_REQUEST).send(error);
+        }
+    }
+
+    async removeProduct(req: Request, res: Response) {
+        try {
+            const categoryBody = CategoryZod.removeProductSchema.parse(req.body);
+            const category = await categoryService.removeProduct(categoryBody.categoryName, categoryBody.productName, categoryBody.VendorId);
+            res.status(httpStatus.OK).send(category);
+        } catch (error) {
+            res.status(httpStatus.BAD_REQUEST).send(error);
+        }
+    }
+
 
 }
 
