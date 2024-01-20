@@ -8,7 +8,9 @@ export interface ISubCategory extends Document {
 }
 
 interface ISubCategoryModel extends Model<ISubCategory> {
-    
+    isSubCategoryNameTaken(subCategoryName: string): Promise<boolean>;
+    doesSubCategoryExist(subCategoryName: string): Promise<boolean>;
+    getSubCategoryObjectId(subCategoryName: string): Promise<Types.ObjectId>;
 }
 
 const subCategorySchema = new Schema<ISubCategory>({
@@ -21,6 +23,22 @@ const subCategorySchema = new Schema<ISubCategory>({
 {
     timestamps: true,
 });
+
+// check if subcategory already exists
+subCategorySchema.statics.isSubCategoryNameTaken = async function (subCategoryName: string) {
+    const subCategory = await this.findOne({ subCategoryName });
+    return !!subCategory;
+};
+
+subCategorySchema.statics.doesSubCategoryExist = async function (subCategoryName: string) {
+    const subCategory = await this.findOne({ subCategoryName });
+    return !!subCategory;
+}
+
+subCategorySchema.statics.getSubCategoryObjectId = async function (subCategoryName: string) {
+    const subCategory = await this.findOne({ subCategoryName });
+    return subCategory._id;
+}
 
 const SubCategory: ISubCategoryModel = model<ISubCategory, ISubCategoryModel>('SubCategory', subCategorySchema);
 

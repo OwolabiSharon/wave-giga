@@ -32,6 +32,11 @@ const updateCategorySchema = z.object({
     categoryImage: z.string().optional(),
 });
 
+const addSubCategorySchema = z.object({
+    categoryName: z.string().min(1).max(255),
+    subCategoryName: z.string().min(1).max(255),
+});
+
 
 
 export default {
@@ -40,4 +45,5 @@ export default {
     findOneSchema,
     deleteOneSchema,
     deleteMultipleSchema,
+    addSubCategorySchema
 };

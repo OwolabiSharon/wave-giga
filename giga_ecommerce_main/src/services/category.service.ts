@@ -1,4 +1,5 @@
 import Category from "../models/general/category.model";
+import subCategory from "../models/general/subCategory.model";
 import ApiError from '../utils/ApiError';
 import httpStatus from 'http-status';
 
@@ -12,9 +13,8 @@ const create = async (categoryBody: any) => {
         // Check if category already exists
         const isCategoryTaken = await Category.isCategoryTaken(categoryBody.categoryName);
         if (isCategoryTaken) {
-            throw new ApiError(httpStatus.BAD_REQUEST, 'Category name is required');
+            throw new ApiError(httpStatus.NOT_FOUND, 'Not found');
         }
-
         // Check if categoryBody has valid properties
         const validProperties = ['categoryName', 'categoryDescription', 'categoryImage'];
         const isValidBody = validProperties.every(prop => categoryBody.hasOwnProperty(prop));
@@ -184,8 +184,170 @@ const update = async (categoryName: string, updatedData: any) => {
     }
 };
 
+const addSubCategory = async (categoryName: any, subCategoryName: any) => {
+    //check if the CategoryNam and subCategoryName are ObjectsIds or not, if they are not then convert them to ObjectIds
+    if (typeof categoryName !== 'object') {
+        categoryName = Category.getCategoryObjectId(categoryName);
+        //if the categoryName is null then return a response with a message and 404 status code
+        if (!categoryName) {
+            return {
+                statusCode: 404,
+                isOperational: true,
+                status: 'fail',
+                message: 'Category not found'
+            };
+        }
+        //if the category does not exist then return a response with a message and 404 status code
+        if (!categoryName) {
+            return {
+                statusCode: 404,
+                isOperational: true,
+                status: 'fail',
+                message: 'Category not found'
+            };
+        }
+    }
+    if (typeof subCategoryName !== 'object') {
+        subCategoryName = await subCategory.getSubCategoryObjectId(subCategoryName);
+        //if the subCategoryName is null then return a response with a message and 404 status code
+        if (!subCategoryName) {
+            return {
+                statusCode: 404,
+                isOperational: true,
+                status: 'fail',
+                message: 'Subcategory not found'
+            };
+        }
+        //if the subcategory does not exist then return a response with a message and 404 status code
+        if (!subCategoryName) {
+            return {
+                statusCode: 404,
+                isOperational: true,
+                status: 'fail',
+                message: 'Subcategory not found'
+            };
+        }
+    }
 
+    //check if the subcategory is already in the category
+    const subCategoryInCategory = Category.isSubCategoryInCategory(categoryName, subCategoryName);
+    //if the subcategory is already in the category then return a response with a message and 404 status code
+    if (subCategoryInCategory) {
+        return {
+            statusCode: 404,
+            isOperational: true,
+            status: 'fail',
+            message: 'Subcategory already in category'
+        };
+    }
 
+    try{
+        //add the subcategory to the category
+        await Category.updateOne({ _id: categoryName }, { $push: { categorySubCategories: subCategoryName } });
+        //return a response with a message and 200 status code
+        return {
+            statusCode: 200,
+            isOperational: true,
+            status: 'success',
+            message: 'Subcategory added to category'
+        };
+    }catch(err){
+        //return a response with a message and 500 status code
+        console.error(err);
+        return {
+            statusCode: 500,
+            isOperational: true,
+            status: 'fail',
+            //send message with the error
+            message: err
+        };
+    
+    }
+    
+
+}
+
+const removeSubCategory = async (categoryName: any, subCategoryName: any) => {
+    //check if the CategoryNam and subCategoryName are ObjectsIds or not, if they are not then convert them to ObjectIds
+    if (typeof categoryName !== 'object') {
+        categoryName = Category.getCategoryObjectId(categoryName);
+        //if the categoryName is null then return a response with a message and 404 status code
+        if (!categoryName) {
+            return {
+                statusCode: 404,
+                isOperational: true,
+                status: 'fail',
+                message: 'Category not found'
+            };
+        }
+        //if the category does not exist then return a response with a message and 404 status code
+        if (!categoryName) {
+            return {
+                statusCode: 404,
+                isOperational: true,
+                status: 'fail',
+                message: 'Category not found'
+            };
+        }
+    }
+    if (typeof subCategoryName !== 'object') {
+        subCategoryName = await subCategory.getSubCategoryObjectId(subCategoryName);
+        //if the subCategoryName is null then return a response with a message and 404 status code
+        if (!subCategoryName) {
+            return {
+                statusCode: 404,
+                isOperational: true,
+                status: 'fail',
+                message: 'Subcategory not found'
+            };
+        }
+        //if the subcategory does not exist then return a response with a message and 404 status code
+        if (!subCategoryName) {
+            return {
+                statusCode: 404,
+                isOperational: true,
+                status: 'fail',
+                message: 'Subcategory not found'
+            };
+        }
+    }
+
+    //check if the subcategory is already in the category
+    const subCategoryInCategory = Category.isSubCategoryInCategory(categoryName, subCategoryName);
+    //if the subcategory is already in the category then return a response with a message and 404 status code
+    if (!subCategoryInCategory) {
+        return {
+            statusCode: 404,
+            isOperational: true,
+            status: 'fail',
+            message: 'Subcategory not in category'
+        };
+    }
+
+    try{
+        //remove the subcategory from the category
+        await Category.updateOne({ _id: categoryName }, { $pull: { categorySubCategories: subCategoryName } });
+        //return a response with a message and 200 status code
+        return {
+            statusCode: 200,
+            isOperational: true,
+            status: 'success',
+            message: 'Subcategory removed from category'
+        };
+    }catch(err){
+        //return a response with a message and 500 status code
+        console.error(err);
+        return {
+            statusCode: 500,
+            isOperational: true,
+            status: 'fail',
+            //send message with the error
+            message: err
+        };
+    
+    }
+
+}
 
 export default {
     create,
@@ -194,4 +356,6 @@ export default {
     deleteOne,
     deleteMultiple,
     update,
+    addSubCategory,
+    removeSubCategory
 };

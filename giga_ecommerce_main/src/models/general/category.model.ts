@@ -10,6 +10,9 @@ export interface ICategory extends Document {
 
 interface ICategoryModel extends Model<ICategory> {
     isCategoryTaken(categoryName: string): boolean;
+    doesCategoryExist(categoryName: string): boolean;
+    isSubCategoryInCategory(categoryName: string, subCategoryName: string): boolean;
+    getCategoryObjectId(categoryName: string): Types.ObjectId;
 }
 
 const categorySchema = new Schema<ICategory>({
@@ -28,6 +31,21 @@ categorySchema.statics.isCategoryTaken = async function (categoryName: string) {
     const category = await this.findOne({ categoryName });
     return !!category;
 };
+
+categorySchema.statics.doesCategoryExist = async function (categoryName: string) {
+    const category = await this.findOne({ categoryName });
+    return !!category;
+}
+
+categorySchema.statics.isSubCategoryInCategory = async function (categoryId: any, subCategoryId: any) {
+    const category = await this.findOne({ _id: categoryId, categorySubCategories: subCategoryId });
+    return !!category;
+}
+
+categorySchema.statics.getCategoryObjectId = async function (categoryName: string) {
+    const category = await this.findOne({ categoryName });
+    return category._id;
+}
 
 const Category = model<ICategory, ICategoryModel>('Category', categorySchema);
 

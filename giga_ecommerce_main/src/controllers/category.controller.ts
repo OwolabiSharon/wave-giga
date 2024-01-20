@@ -6,14 +6,11 @@ import CategoryZod from '../validations/categories.model.zod';
 
 class categoryController {
     async createCategory(req: Request, res: Response) {
-        try {
             const categoryBody = CategoryZod.createCategorySchema.parse(req.body);
             //Remember to add cloudinary image function here 
             const category = await categoryService.create(categoryBody);
             res.status(httpStatus.CREATED).send(category);
-        } catch (error) {
-            res.status(httpStatus.BAD_REQUEST).send(error);
-        }
+
     }
 
     async getAllCategories(req: Request, res: Response) {
