@@ -37,16 +37,25 @@ class UserController {
   //   res.status(httpStatus.CREATED).send({ ...resp, status: true });
   // });
 
-  // getUserById = catchAsync(async (req: Request, res: Response) => {
-  //   const resp = await userService.getUser(req.body);
-  //   res.status(httpStatus.CREATED).send({ ...resp, status: true });
-  // });
-
-  getProfileById = catchAsync(async (req: Request, res: Response) => {
-    const resp = await userService.getUser (req.body);
+  getUser = catchAsync(async (req: Request, res: Response) => {
+    const resp = await userService.getUser(req.body);
     res.status(httpStatus.CREATED).send({ ...resp, status: true });
   });
 
+  addCard = catchAsync(async (req: Request, res: Response) => {
+    const resp = await userService.addCard(req.body);
+    res.status(httpStatus.CREATED).send({ ...resp, status: true });
+  });
+
+  rateUser = catchAsync(async (req: Request, res: Response) => {
+    const resp = await userService.rateUser(req.body);
+    res.status(httpStatus.CREATED).send({ ...resp, status: true });
+  });
+
+  createTaxiAccount = catchAsync(async (req: Request, res: Response) => {
+    const resp = await userService.createTaxiAccount(req.body);
+    res.status(httpStatus.CREATED).send({ ...resp, status: true });
+  });
 }
 
 export default new UserController();

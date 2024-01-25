@@ -41,10 +41,20 @@ const updatePassword = {
   }),
 };
 
+const payTaxiFee = {
+  body: Joi.object().keys({
+    id: Joi.string().required(),
+    token: Joi.string().required(),
+    amount: Joi.number().required(),
+    narration: Joi.string().required(),
+  }),
+};
+
 
 export default {
   createAccount,
   getClosestDrivers,
   requestRide,
   rateDriver,
+  payTaxiFee,
 };

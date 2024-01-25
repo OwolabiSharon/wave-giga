@@ -1,13 +1,13 @@
 import TaxiModel from '../models/taxiMain.model';
 import Ride from '../models/ride.model';
 import httpStatus from 'http-status';
-import Rabbit from '../rabbitMq/setup';
+import { EventSender } from '../utils/eventSystem'; 
 import ApiError from '../utils/ApiError';
 import tomtomApi from './tomtomApi.services';
 import rideConfig from '../config/ride.config';
-const rabbit = new Rabbit();
+const eventSender = new EventSender();
 
-
+ 
 
 const requestRide = async (data: any) => {
     const {
@@ -40,9 +40,11 @@ const requestRide = async (data: any) => {
           const ride = await Ride.create(rideData);
           customer.requestedRide = ride._id
           customer.save()
-
-          rabbit.publishMessage('GetRideOffer', rideData);
-          const data = (await rabbit.consumeMessage('GetRideOfferResponse')) as any
+          const data = (eventSender.sendEvent({
+            name: 'GetRideOffer',
+            service: 'taxi_driver', // Assuming 'user' is the service name
+            payload: rideData,
+          })) as any
           
           ride.distance = data.distance
           ride.driverArrivalEta = data.arrivalEta
@@ -111,9 +113,13 @@ const getClosestDrivers = async(data: any) =>
         ridePreferences: data.ridePreferences ? data.ridePreferences : undefined,
       };
     
-    rabbit.publishMessage('getClosestDrivers', requestPayload);
+    
     try {
-      const drivers = await rabbit.consumeMessage('getClosestDriversResponse');
+      const drivers = (eventSender.sendEvent({
+        name: 'getClosestDrivers',
+        service: 'taxi_driver', // Assuming 'user' is the service name
+        payload: requestPayload,
+      })) as any
       return drivers
     } catch (error) {
       console.log(error);
@@ -124,7 +130,11 @@ const getClosestDrivers = async(data: any) =>
  
 const rateDriver = async(data: any) => 
 {  
-    rabbit.publishMessage('rateUser', {userId: data.driverUserId, rating: data.rating});
+  eventSender.sendEvent({
+    name: 'rateUser',
+    service: 'user', // Assuming 'user' is the service name
+    payload: {userId: data.driverUserId, rating: data.rating}
+  });
     return {message: "Rated"}
 }
 
@@ -139,7 +149,12 @@ const createTaxiAccount = async (data: any) => {
     };
     try {
       const customer = await TaxiModel.create(taxiData);
-      rabbit.publishMessage('createTaxiProfile', {accountInfo: customer, type: "TaxiCustomer"});
+      eventSender.sendEvent({
+        name: 'createTaxiAccount',
+        service: 'user', // Assuming 'user' is the service name
+        payload: {accountInfo: customer, type: "TaxiCustomer"},
+      })
+
       return customer
     } catch (error) {
       console.log(error);
@@ -151,7 +166,11 @@ const createTaxiAccount = async (data: any) => {
 const payTaxiFee = async (data: any) => {
   try {
     const taxiCustomer = await TaxiModel.findById(data.id).populate('user');
-    rabbit.publishMessage('payFee', {token: data.token, amount: data.amount, narration: data.narration});
+    eventSender.sendEvent({
+      name: 'payFee',
+      service: 'payment', // Assuming 'user' is the service name
+      payload: {token: data.token, amount: data.amount, narration: data.narration},
+    })
     return taxiCustomer;
   } catch (error) {
     console.error('Error fetching TaxiCustomer:', error);
@@ -159,12 +178,60 @@ const payTaxiFee = async (data: any) => {
   }
 };
 
+const DriverEndTrip = async (data: any) => {
+  // Perform custom actions with the data
+  const customer = await TaxiModel.findOne({ _id: data.customerId});
+  const currentRide = await Ride.findOne({ _id: customer?.currentRide})
+  if(currentRide && customer)
+  {
+      currentRide.status = "Completed"
+      customer.currentRide = null 
+      customer.rideHistory.push(currentRide._id);
+      await customer.save()
+    await currentRide.save()
+    return {message: "Driver Ended Trip"}
+  }
+  
+}
+
+
+const DriverAcceptRide = async (data: any) => {
+  const customer = await TaxiModel.findOne({ _id: data.customerId});
+  const ride = await Ride.findOne({ _id: customer?.requestedRide})
+  if(ride && customer)
+  {
+      ride.status = "Ongoing"
+      customer.currentRide = ride._id
+      customer.requestedRide = null
+      await customer.save()
+    await ride.save()
+    return {message: "Driver Accepted Ride"}
+  }
+  
+}
+
+const DriverRejectRide = async (data: any) => {
+
+  const customer = await TaxiModel.findOne({ _id: data.customerId});
+  const ride = await Ride.findOne({ _id: customer?.requestedRide})
+  if(ride && customer)
+  {
+      await ride.delete()
+      customer.requestedRide = null
+      await customer.save()
+      return {message: "Driver Rejected Ride"}
+  }
+  
+}
 export default {
     getClosestDrivers,
     requestRide,
     rateDriver,
     createTaxiAccount,
-    payTaxiFee
+    payTaxiFee,
+    DriverEndTrip,
+    DriverAcceptRide,
+    DriverRejectRide
   };
 
   

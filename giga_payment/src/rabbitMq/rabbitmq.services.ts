@@ -31,4 +31,4 @@ const payFee = async () => {
 
 export default {
     payFee
-};
+}; 

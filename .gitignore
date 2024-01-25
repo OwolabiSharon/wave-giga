@@ -1,0 +1,19 @@
+# Dependencies
+node_modules
+
+# yarn error logs
+yarn-error.log
+
+# Environment varibales
+.env*
+!.env*.example
+
+# Code coverage
+coverage
+
+package-lock.json
+yarn.lock
+
+# temporary files that cant be pushed yet (ci/cd)
+.github/workflows
+```

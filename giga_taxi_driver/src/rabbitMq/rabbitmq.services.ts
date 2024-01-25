@@ -5,9 +5,7 @@ import tomtomApiServices from '../services/tomtomApi.services';
 
 const rabbit = new Rabbit();  
 
-const GetRideOffer = async () => {
-    //function to do something with the data in the rabbit mq message(add card)
-    async function processData(data: any) {
+const GetRideOffer = async (data: any) => {
         const {
             driverId,
             driverUserId,
@@ -48,22 +46,22 @@ const GetRideOffer = async () => {
             });
             driver.rideOffers.push(rideData._id)
             await driver.save()
+            return {
+              distance: rideData.distance,
+              arrivalEta: rideData.arrivalEta,
+              rideEta: rideData.rideEta 
+            }
         } 
         } catch (error) {
           console.log(error);
           
-          rabbit.publishMessage('GetRideOfferResponse', "something went wrong");
+
         }
         
         
     }
-      
-    // Call consumeMessage and pass the processData function
 
-    rabbit.consumeMessage('GetRideOffer', processData);
-};
-
-const getClosestDrivers = async () => { 
+const getClosestDrivers = async (data: any) => { 
   async function findFinalDrivers(targetLocation: any, limit: number, ridePreference: string) {
     
     try {
@@ -99,25 +97,15 @@ const getClosestDrivers = async () => {
     }
   }
 
-  // Function to process data from the rabbit mq message
-  async function processData(data: any) {
-    // Perform custom actions with the data
     const { location, ridePreference } = data; // Assuming ridePreference is included in the data
     findFinalDrivers(location, 5, ridePreference)
       .then((drivers) => {
         console.log(drivers);
-        
-        rabbit.publishMessage('getClosestDriversResponse', drivers);
       })
       .catch((error) => {
         console.log(error);
-        rabbit.publishMessage('getClosestDriversResponse', "An error occurred");
       });
   }
-
-  // Call consumeMessage and pass the processData function
-  rabbit.consumeMessage('getClosestDrivers',processData );
-};
 
 export default {
     GetRideOffer,

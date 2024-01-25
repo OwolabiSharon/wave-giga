@@ -22,9 +22,10 @@ const getUser = async (id: any) => {
 
     return user;
 };
+    
 
 const createUser = async (userBody: any) => {
-    if (await UserModel.isEmailTaken(userBody.email)) {
+    if (true) {
         throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
     }
 
@@ -149,7 +150,51 @@ const getAllUsers = async () => {
 };
 
 
+const addCard = async (data: any) => {
 
+  const user = await UserModel.findById(data.userId);
+
+  if (!user) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User deos not exist');
+  }
+  else{
+      // Associate the credit card with the user
+      user.creditCard = data.card.token;
+
+       // Save the changes to the user document
+       await user.save();
+       return user;
+   }
+}
+
+const rateUser = async (data: any) => {
+
+  const user = await UserModel.findById(data.userId);
+
+  if (!user) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User deos not exist');
+  }
+  else{
+      user.ratings.push(data.rating)
+      user.save()
+      return {message: "user rated"}
+  }
+}
+
+const createTaxiAccount = async (data: any) => {
+
+    const user = await UserModel.findById(data.accountInfo.user);
+
+    if (!user) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'User deos not exist');
+    }
+    else{
+        user.taxiProfile = data.accountInfo._id
+        user.taxiProfileType = data.type
+        user.save()
+        return {message: "taxi account created"}
+    }
+}
 
 
 export default {
@@ -159,6 +204,8 @@ export default {
     verifyEmail,
     updateUser,
     deleteUser,
-    getAllUsers
-
+    getAllUsers,
+    addCard,
+    rateUser,
+    createTaxiAccount,
   };
