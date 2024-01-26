@@ -10,12 +10,22 @@ model. These properties include name, userName, email, password, createdAt, and 
 methods include isPasswordMatch, isEmailTaken, and isUserNameTaken, which are used to check if a
 given password, email, or username is already taken in the database. */
 interface IUser extends Document {
+  profilePicture: string;// this will be a url using cloudinary
   firstName: string;
   lastName: string;
   otherNames: string;
   userName: string;
   email: string;
+  address: string;// might make this an object 
+  zipCode: number;
+  gender: string;
+  country: string;
+  //uneeded but its on the figma design
+  bodyWeight: number;
+  areaOfInterest: string;
+  ageGroup: string;
   [key: string]: any;
+
   //check if this is the right type
   password: string;
   creditCard?: mongoose.Types.ObjectId;
@@ -76,6 +86,14 @@ const userSchema = new mongoose.Schema<IUser>(
         validator: (value: string) => validator.isEmail(value),
         message: 'Invalid email',
       },
+    },
+    address: {
+      type: String,
+      required: true,
+    },
+    zipCode: {
+      type: Number,
+      required: true,
     },
     password: {
       type: String,

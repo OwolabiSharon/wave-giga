@@ -29,3 +29,11 @@ services:
       - "6000:6000"
     depends_on:
       - rabbitmq
+  gigaecommercemain:
+    build: ./giga_ecommerce_main
+    ports:
+      - "7000:7000"
+    depends_on:
+      - rabbitmq
+
+  
