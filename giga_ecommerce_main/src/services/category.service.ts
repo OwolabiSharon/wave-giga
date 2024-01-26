@@ -62,7 +62,15 @@ const findAll = async () => {
     }
 };
 
-const findOne = async (categoryName: string) => {
+
+const findOne = async (categoryName: any) => {
+    // Check if category name is provided
+    if (!categoryName) {
+        throw new ApiError(httpStatus.BAD_REQUEST, 'Category name is required');
+    }
+
+    //check if the categoryName is an ObjectId and 
+    
     try {
         const category = await Category.findOne({ categoryName });
 
@@ -85,8 +93,59 @@ const findOne = async (categoryName: string) => {
     }
 };
 
+const findAllSubCategories = async (categoryName: any) => {
+    // Check if category name is provided
+    if (!categoryName) {
+        throw new ApiError(httpStatus.BAD_REQUEST, 'Category name is required');
+    }
 
-const deleteOne = async (categoryName: string) => {
+    //if it is an object id then find the category by id
+    if (typeof categoryName === 'object') {
+        const category = await Category.findById(categoryName);
+        //if the category is null then return a response with a message and 404 status code
+        if (!category) {
+            return {
+                statusCode: 404,
+                isOperational: true,
+                status: 'fail',
+                message: 'Category not found'
+            };
+        }
+        //return a response with the category and 200 status code
+        return {
+            statusCode: 200,
+            isOperational: true,
+            status: 'success',
+            categorySubCategories: category.categorySubCategories
+        };
+    }
+
+    // Check if category exists
+    const category = await Category.findOne({ categoryName });
+
+    try {
+        // Case: Category exists
+        if (!category) {
+            throw new ApiError(httpStatus.NOT_FOUND, 'Category not found');
+        }
+
+        return category.categorySubCategories;
+    } catch (error: any) {
+        // Handle unexpected errors
+        console.error(error);
+
+        // Case: MongoDB error
+        if (error.name === 'MongoError') {
+            throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'MongoDB Error');
+        }
+
+        // Case: Other unexpected errors
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Internal Server Error');
+    }
+};
+
+
+const deleteOne = async (categoryName: any) => {
     //if there is no value in the category variable then return a response with a message and 404 status code no category has been passed in
     if (!categoryName || categoryName.trim() === '') {
         return {
@@ -94,6 +153,28 @@ const deleteOne = async (categoryName: string) => {
             isOperational: true,
             status: 'fail',
             message: 'Category name is required'
+        };
+    }
+    //if the categoryName is an ObjectId then find the category by id
+    if (typeof categoryName === 'object') {
+        const category = await Category.findById(categoryName);
+        //if the category is null then return a response with a message and 404 status code
+        if (!category) {
+            return {
+                statusCode: 404,
+                isOperational: true,
+                status: 'fail',
+                message: 'Category not found'
+            };
+        }
+        //delete the category
+        await category.remove();
+        //return a response with a message and 200 status code
+        return {
+            statusCode: 200,
+            isOperational: true,
+            status: 'success',
+            message: 'Category deleted'
         };
     }
 
@@ -118,6 +199,7 @@ const deleteOne = async (categoryName: string) => {
         message: 'Category deleted'
     };
 };
+
 
 const deleteMultiple = async (categoryNames: string[]) => {
     const categories = await Category.find({categoryName: {$in: categoryNames}});
@@ -151,7 +233,8 @@ const deleteMultiple = async (categoryNames: string[]) => {
         status: 'success',
         message: 'Categories deleted'
     };
-}
+};
+
 
 const update = async (categoryName: string, updatedData: any) => {
     try {
@@ -184,6 +267,7 @@ const update = async (categoryName: string, updatedData: any) => {
         throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Internal Server Error');
     }
 };
+
 
 const addSubCategory = async (categoryName: any, subCategoryName: any) => {
     //check if the CategoryNam and subCategoryName are ObjectsIds or not, if they are not then convert them to ObjectIds
@@ -266,7 +350,8 @@ const addSubCategory = async (categoryName: any, subCategoryName: any) => {
     }
     
 
-}
+};
+
 
 const removeSubCategory = async (categoryName: any, subCategoryName: any) => {
     //check if the CategoryNam and subCategoryName are ObjectsIds or not, if they are not then convert them to ObjectIds
@@ -348,7 +433,8 @@ const removeSubCategory = async (categoryName: any, subCategoryName: any) => {
     
     }
 
-}
+};
+
 
 const addProduct = async (categoryName: any, productName: any ,vendorId:any) => {
     //check if the CategoryNam and productName are ObjectsIds or not, if they are not then convert them to ObjectIds
@@ -431,7 +517,8 @@ const addProduct = async (categoryName: any, productName: any ,vendorId:any) => 
     
     }
 
-}
+};
+
 
 const removeProduct = async (categoryName: any, productName: any, vendorId: any) => {
     //check if the CategoryNam and productName are ObjectsIds or not, if they are not then convert them to ObjectIds
@@ -512,7 +599,9 @@ const removeProduct = async (categoryName: any, productName: any, vendorId: any)
             message: err
         };
     }
-}
+};
+
+
 export default {
     create,
     findAll,

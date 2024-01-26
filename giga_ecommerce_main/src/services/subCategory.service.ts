@@ -42,3 +42,42 @@ const findAllSubCategories = async () => {
     // Case: Subcategories exist
     return subCategories;
 };
+
+const findOneSubCategory = async (subCategoryName: string) => {
+    // Check if subcategory name is provided
+    if (!subCategoryName) {
+        throw new ApiError(httpStatus.BAD_REQUEST, 'Subcategory name is required');
+    }
+
+    // Check if subcategory exists
+    const subCategory = await SubCategory.findOne({ subCategoryName });
+    if (!subCategory) {
+        throw new ApiError(httpStatus.NOT_FOUND, 'Subcategory not found');
+    }
+
+    // Case: Subcategory exists
+    return subCategory;
+};
+
+const deleteOneSubCategory = async (subCategoryName: string) => {
+    // Check if subcategory name is provided
+    if (!subCategoryName) {
+        throw new ApiError(httpStatus.BAD_REQUEST, 'Subcategory name is required');
+    }
+
+    // Check if subcategory exists
+    const subCategory = await SubCategory.findOne({ subCategoryName });
+    if (!subCategory) {
+        throw new ApiError(httpStatus.NOT_FOUND, 'Subcategory not found');
+    }
+
+    // Check if subcategory was deleted successfully
+    const deletedSubCategory = await SubCategory.deleteOne({ subCategoryName });
+    if (!deletedSubCategory) {
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to delete subcategory');
+    }
+
+    // Case: Subcategory was deleted successfully
+    return deletedSubCategory;
+};
+
