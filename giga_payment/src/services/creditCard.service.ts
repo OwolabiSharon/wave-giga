@@ -1,13 +1,13 @@
 import { CreditCard, ICreditCard } from '../models/creditCard.model';
-import Rabbit from '../rabbitMq/setup';
 import httpStatus from 'http-status';
 import generateTransactionReference from '../utils/payment';
 import ApiError from '../utils/ApiError';
 import Flutterwave from 'flutterwave-node-v3';
+import { EventSender } from '../utils/eventSystem'; 
 
 const flutterwave = new Flutterwave('FLWPUBK_TEST-b84f980af3c945155bf845f2680028cc-X', 'FLWSECK_TEST-90782a4930b5c5eae4552ded6441098b-X');
+const eventSender = new EventSender();
 
-const rabbit = new Rabbit();
 interface ChargeDetails {
     card_number: string;
     cvv: string;
@@ -91,15 +91,31 @@ const validateTransaction = async (flutterwaveReference: string, otp: string, us
     const creditCard = await CreditCard.create({
         token: verifyTransaction?.data.card.token 
     });
-
-    rabbit.publishMessage('addCard', {data: creditCard, userId: userId });
-    //const data = await rabbit.consumeMessage('addCardResponse');
+    eventSender.sendEvent({
+      name: 'addCard',
+      service: 'user', // Assuming 'user' is the service name
+      payload: {data: creditCard, userId: userId },
+    })
     return verifyTransaction
 }
 
+const payFee = async (data: any) => {
+    const details = {
+        token: data.token,
+        currency: "NGN",
+        country: "NG",
+        amount: data.amount,
+        email: "generic@yahoo.com",
+        tx_ref: generateTransactionReference(),
+        narration: data.narration,
+    };
+  const response = await flutterwave.Tokenized.charge(details);
+  return response;
+  }
 
 
 export default {
     createCard, 
-    validateTransaction
+    validateTransaction,
+    payFee
  };

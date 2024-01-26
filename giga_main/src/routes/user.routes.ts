@@ -15,4 +15,19 @@ router
 .post(validate(validations.users.loginUser), UserController.loginUser)
 
 
+router
+  .route('/getUser')
+  .post(UserController.getUser)
+
+router
+.route('/addCard')
+.post(UserController.addCard)
+
+router
+.route('/rateUser')
+.post(UserController.rateUser)
+
+router
+.route('/createTaxiAccount')
+.post(UserController.createTaxiAccount)
 export default router;

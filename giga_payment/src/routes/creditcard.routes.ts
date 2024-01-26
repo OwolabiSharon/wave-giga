@@ -12,6 +12,10 @@ router
 
 router
 .route('/validate')
-.post(CreditCardController.validateTransaction)
+  .post(CreditCardController.validateTransaction)
+
+router
+.route('/payFee')
+.post(CreditCardController.payFee)
 
   export default router;
