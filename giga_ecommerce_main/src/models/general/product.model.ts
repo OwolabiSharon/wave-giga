@@ -2,13 +2,13 @@ import { AnyExpression, Document, Model, model, Schema,Types } from 'mongoose';
 import Review, { IReview } from '../users/reviews.model'; 
 
 export interface IProduct extends Document {
-    vendor: Types.ObjectId;
-    shop: Types.ObjectId;
+    vendor: Schema.Types.ObjectId;
+    shop: Schema.Types.ObjectId;
     productName: string;
     productDisplayName: string;//might not be needed
     productDescription: string;
-    productCategory: string;
-    productSubCategory: string;
+    productCategory: Schema.Types.ObjectId;
+    productSubCategory: Schema.Types.ObjectId;
     productImages: string[];
     productPrice: number;
     productAmountInStock: number;
@@ -16,7 +16,6 @@ export interface IProduct extends Document {
     productFulfilmentTime: number;
     productReviews: Types.ObjectId[];
     score?: number;
-
 }
 
 interface IProductModel extends Model<IProduct> {
@@ -32,8 +31,8 @@ const productSchema = new Schema<IProduct>({
     productName: { type: String, required: true },
     productDisplayName: { type: String, required: true },
     productDescription: { type: String, required: true },
-    productCategory: { type: String, required: true },
-    productSubCategory: { type: String, required: true },
+    productCategory: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
+    productSubCategory: { type: Schema.Types.ObjectId, ref: 'SubCategory', required: true },
     productImages: [{ type: String, required: true }],
     productPrice: { type: Number, required: true },
     productAmountInStock: { type: Number, required: true },

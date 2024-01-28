@@ -1,23 +1,25 @@
-import { PaginatedResults, paginate } from '../models/general/paginate.model';
 import Product, { IProduct } from "../models/general/product.model";
 import { IReview } from "../models/users/reviews.model";
 import { EventSender } from '../utils/eventSystem';
-import { Types, Schema } from 'mongoose';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
+import { Types, Schema } from 'mongoose';
 import httpStatus from 'http-status';
 import { query } from 'express';
 
-interface searchPayload {
+interface SearchPayload {
     page: number;
     limit: number;
-    product: IProduct;
-    relevance: number;
-    sort: string;
-    category: string;
-    subCategory: string;
-    shop: string;
+    product?: string;
+    rating?: number;
+    sort?: string;
+    category?: string;
+    subCategory?: string;
+    shop?: string;
+    minPrice?: number; 
+    maxPrice?: number;
 }
+
 
 interface createProductPayload {
     vendor: Schema.Types.ObjectId;
@@ -33,13 +35,6 @@ interface createProductPayload {
     productFulfilmentTime: number;
 }
 
-// interface SearchResponse {
-//     page: number;
-//     currentPage: number;
-//     pageSize: number;
-//     results: SearchByNameResult[];
-// }
-
 export class ProductService {
     private eventSender: EventSender;
 
@@ -54,10 +49,9 @@ export class ProductService {
             // Additional validation or business logic before creating the product
     
             const product = await Product.create({ vendor, shop, productName, productDisplayName, productDescription, productCategory, productSubCategory, productImages, productPrice, productAmountInStock, productFulfilmentTime });
-            
+
             // Additional logic after creating the product, if needed
-    
-            return new ApiResponse(201, product.toObject()); // 201 Created status
+            return new ApiResponse(201, { success: true, data: product.toObject() }); // 201 Created status
         } catch (error:any) {
             console.error('Error creating product:', error.message);
     
@@ -73,6 +67,74 @@ export class ProductService {
             }
         }
     }
+
+    public async search(payload: SearchPayload): Promise<ApiResponse<any>> {
+        const { page = 1, limit = 10, product = '', rating = 0, sort = '', category = 'All', subCategory = 'All', shop = '', minPrice = 0, maxPrice = Infinity } = payload;
+
+        const skip = (page - 1) * limit;
+
+        const query: any = {};
+
+        if (product) {
+            // Use a regular expression for case-insensitive fuzzy search by name
+            query.productName = { $regex: new RegExp(product, 'i') };
+        }
+
+        if (rating > 0) {
+            query.productRating = { $gte: rating };
+        }
+
+        if (category !== 'All') {
+            query.productCategory = category;
+        }
+
+        if (subCategory !== 'All') {
+            query.productSubCategory = subCategory;
+        }
+
+        if (shop) {
+            // Assuming shop is the shop name
+            query.shop = shop;
+        }
+
+        query.productPrice = { $gte: minPrice, $lte: maxPrice };
+
+        let sortOptions: any = {}
+        
+        if (sort === 'price') {
+            sortOptions.productPrice = 1; // Ascending order for price
+        } else if (sort === '-price') {
+            sortOptions.productPrice = -1; // Descending order for price
+        }
+
+        try {
+            const totalDocs = await Product.countDocuments(query);
+            const results = await Product.find(query)
+                .skip(skip)
+                .limit(limit)
+                .sort(sort)
+                .populate('productCategory', 'categoryName') // Assuming 'categoryName' is the field to be populated
+                .populate('productSubCategory', 'subCategoryName'); // Assuming 'subCategoryName' is the field to be populated
+
+            const totalPages = Math.ceil(totalDocs / limit);
+            const response = {
+                success: true,
+                data: {
+                    results,
+                    totalPages,
+                    currentPage: page,
+                    totalResults: totalDocs,
+                },
+            };
+
+            return new ApiResponse(200, response);
+        } catch (error:any) {
+            console.error('Error searching products:', error.message);
+
+            return new ApiResponse(500, { success: false, error: 'Internal server error' });
+        }
+    }
+
 }
 
 export default new ProductService(new EventSender());
@@ -80,21 +142,7 @@ export default new ProductService(new EventSender());
 
 
 
-// const create = async (productBody: any)=> {
-//     const product = await Product.create(productBody);
-//     return product;
-// };
 
-// const findAll = async (
-//     page: number,
-//     pageSize: number 
-// ): Promise<PaginatedResults<IProduct>> => {
-//     return await paginate<IProduct>(Product, page, pageSize);
-// };
-
-// const findById = async (productId: Types.ObjectId): Promise<IProduct | null> => {
-//     return await Product.findById(productId);
-// };
 
 
 // const update = async (data: any) => {
