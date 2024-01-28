@@ -9,10 +9,14 @@ import { query } from 'express';
 
 
 
-interface GetProductByCategoryPayload {
+interface GetPopularProductsPayload {
     page?: number;
     limit?: number;
-    productId: Schema.Types.ObjectId;
+}
+
+interface GetNewProductsPayload {
+    page?: number;
+    limit?: number;
 }
 
 interface GetProductReviewsPayload {
@@ -435,7 +439,86 @@ export class ProductService {
         }
     }
 
-    
+    public async getPopularProducts(payload: GetPopularProductsPayload): Promise<ApiResponse<any>> {
+        try {
+            const { page = 1, limit = 10 } = payload;
+
+            const averageSales = await Product.getHighestSales()/2;//get the average sales of all products
+            const minSalesThreshold = Math.ceil(averageSales * (1 / 3));//get the minimum sales threshold
+            
+            // Use the query criteria in the find method
+            const queryCriteria = {
+                // Example: Get products with sales greater than the minimum threshold
+                sales: { $gt: minSalesThreshold },
+                // You can add additional criteria if needed
+                rating: { $gt: 3.5 },
+            };
+
+            const popularProducts = await Product.find({ ...queryCriteria })
+                .sort({ sales: -1, productRating: -1 }) // Sort by sales (descending) and then by ratings (descending)
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .populate('productCategory', 'categoryName') // Assuming 'categoryName' is the field to be populated;
+
+            const response = {
+                success: true,
+                data: popularProducts,
+            };
+
+            return new ApiResponse(httpStatus.OK, response);
+        } catch (error: any) {
+            console.error('Error getting popular products:', error.message);
+            // Handle errors and return an appropriate ApiResponse
+            return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+        }
+    }
+
+    public async getNewProducts(payload: GetNewProductsPayload): Promise<ApiResponse<any>> {
+        try {
+            const { page = 1, limit = 10 } = payload;
+
+            const newProducts = await Product.find()
+                .sort({ createdAt: -1 }) // Sort by creation date in descending order
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .populate('productCategory', 'categoryName') // Assuming 'categoryName' is the field to be populated;
+
+            const response = {
+                success: true,
+                data: newProducts,
+            };
+
+            return new ApiResponse(httpStatus.OK, response);
+        } catch (error: any) {
+            console.error('Error getting new products:', error.message);
+            // Handle errors and return an appropriate ApiResponse
+            return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+        }
+    }
+
+    public async getFeaturedProducts(payload: GetPopularProductsPayload): Promise<ApiResponse<any>> {
+        try {
+            const { page = 1, limit = 10 } = payload;
+
+            const featuredProducts = await Product.find({ featured: true })
+                .sort({ createdAt: -1 }) // Sort by creation date in descending order
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .populate('productCategory', 'categoryName') // Assuming 'categoryName' is the field to be populated;
+
+            const response = {
+                success: true,
+                data: featuredProducts,
+            };
+
+            return new ApiResponse(httpStatus.OK, response);
+        } catch (error: any) {
+            console.error('Error getting featured products:', error.message);
+            // Handle errors and return an appropriate ApiResponse
+            return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+        }
+    }
+
 }
 
 export default new ProductService(new EventSender());

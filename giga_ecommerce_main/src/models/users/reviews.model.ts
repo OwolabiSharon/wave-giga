@@ -30,8 +30,8 @@ reviewSchema.statics.calculateAverageRating = async function (productId: Types.O
         { $match: { productId } },
         { $group: { _id: null, averageRating: { $avg: '$rating' } } }
     ]);
-
-    return result.length > 0 ? result[0].averageRating : 0;
+    //return the average rating in 1 decimal place
+    return Math.round(result[0].averageRating * 10) / 10;
 };
 reviewSchema.statics.updateProductRating = async function (productId: Types.ObjectId, newRating: number) {
     // Assuming you have a Product model

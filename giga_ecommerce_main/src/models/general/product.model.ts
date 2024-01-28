@@ -23,7 +23,7 @@ interface IProductModel extends Model<IProduct> {
     averageRating(productId: Types.ObjectId): Promise<number>;
     searchByText(query: string): Promise<IProduct[]>;
     findByCategory(productCategory: string): Promise<IProduct[]>;
-    getProductObjectId(productName: string, vendorId: Types.ObjectId): Promise<Types.ObjectId[]>;
+    getHighestSales(): Promise<number>;
 }
 
 const productSchema = new Schema<IProduct>({
@@ -41,6 +41,7 @@ const productSchema = new Schema<IProduct>({
     productRating: { type: Number, default: 0 },
     productFulfilmentTime: { type: Number, required: true},
     productReviews: [{ type: Schema.Types.ObjectId, ref: 'Review' , default: []}],
+    sales: { type: Number, default: 0 },
 },
 {
     timestamps: true,
@@ -72,7 +73,11 @@ productSchema.statics.searchByText = async function (query: string): Promise<IPr
 
     return results;
 };
-
+//get the higest sales among all the products
+productSchema.statics.getHighestSales = async function (): Promise<number> {
+    const results = await this.find().sort({ sales: -1 }).exec();
+    return results[0].sales;
+};
 
 productSchema.pre('save', async function (next) {
     const product = this as IProduct;
