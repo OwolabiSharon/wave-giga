@@ -16,6 +16,7 @@ export interface IProduct extends Document {
     productFulfilmentTime: number;
     productReviews: Types.ObjectId[];
     score?: number;
+    [key: string]: any;
 }
 
 interface IProductModel extends Model<IProduct> {
@@ -72,10 +73,6 @@ productSchema.statics.searchByText = async function (query: string): Promise<IPr
     return results;
 };
 
-productSchema.statics.getProductObjectId = async function (productName: string, vendorId: any): Promise<Types.ObjectId[]> {
-    const products = await this.find({ productName, vendor: vendorId });
-    return products.map((product: { _id: any; }) => product._id);
-};
 
 productSchema.pre('save', async function (next) {
     const product = this as IProduct;

@@ -1,25 +1,29 @@
-import Product, { IProduct } from "../models/general/product.model";
-import { IReview } from "../models/users/reviews.model";
+import Product from "../models/general/product.model";
+import Review from "../models/users/reviews.model";
 import { EventSender } from '../utils/eventSystem';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
-import { Types, Schema } from 'mongoose';
 import httpStatus from 'http-status';
+import { Schema } from 'mongoose';
 import { query } from 'express';
 
-interface SearchPayload {
-    page: number;
-    limit: number;
-    product?: string;
-    rating?: number;
-    sort?: string;
-    category?: string;
-    subCategory?: string;
-    shop?: string;
-    minPrice?: number; 
-    maxPrice?: number;
+
+
+interface GetProductByCategoryPayload {
+    page?: number;
+    limit?: number;
+    productId: Schema.Types.ObjectId;
 }
 
+interface GetProductReviewsPayload {
+    page?: number;
+    limit?: number;
+    productId: Schema.Types.ObjectId;
+}
+
+interface GetProductRatingPayload {
+    productId: Schema.Types.ObjectId;
+}
 
 interface createProductPayload {
     vendor: Schema.Types.ObjectId;
@@ -34,6 +38,54 @@ interface createProductPayload {
     productAmountInStock: number;
     productFulfilmentTime: number;
 }
+interface RemoveReviewPayload {
+    userId: Schema.Types.ObjectId;
+    reviewId: Schema.Types.ObjectId;
+}
+
+interface GetProductPayload {
+    reviewsPage?: number;
+    reviewsLimit?: number;
+    productId: Schema.Types.ObjectId;
+}
+
+interface AddReviewPayload {
+    userId: Schema.Types.ObjectId;
+    productId: Schema.Types.ObjectId;
+    review: string;
+    productRating?: number;
+}
+
+interface SearchPayload {
+    page: number;
+    limit: number;
+    product?: string;
+    rating?: number;
+    sort?: string;
+    category?: string;
+    subCategory?: string;
+    shop?: string;
+    minPrice?: number; 
+    maxPrice?: number;
+}
+
+interface UpdatePayload {
+    productId: Schema.Types.ObjectId;
+    productName?: string;
+    productDisplayName?: string;
+    productDescription?: string;
+    productCategory?: string;
+    productSubCategory?: string;
+    productImages?: string[];
+    productPrice?: number;
+    productAmountInStock?: number;
+    productFulfilmentTime?: number;
+}
+
+interface RemovePayload {
+    productId: Schema.Types.ObjectId;
+}
+
 
 export class ProductService {
     private eventSender: EventSender;
@@ -51,7 +103,7 @@ export class ProductService {
             const product = await Product.create({ vendor, shop, productName, productDisplayName, productDescription, productCategory, productSubCategory, productImages, productPrice, productAmountInStock, productFulfilmentTime });
 
             // Additional logic after creating the product, if needed
-            return new ApiResponse(201, { success: true, data: product.toObject() }); // 201 Created status
+            return new ApiResponse(httpStatus.CREATED, { success: true, data: product.toObject() }); // 201 Created status
         } catch (error:any) {
             console.error('Error creating product:', error.message);
     
@@ -60,10 +112,10 @@ export class ProductService {
                 return new ApiResponse(error.statusCode, { error: error.message });
             } else if (error.name === 'ValidationError') {
                 // Handle validation errors (e.g., required fields missing)
-                return new ApiResponse(400, { error: 'Validation error', details: error.errors });
+                return new ApiResponse(httpStatus.BAD_REQUEST, { error: 'Validation error', details: error.errors });
             } else {
                 // Handle other errors
-                return new ApiResponse(500, { error: 'Internal server error' });
+                return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
             }
         }
     }
@@ -127,14 +179,263 @@ export class ProductService {
                 },
             };
 
-            return new ApiResponse(200, response);
+            return new ApiResponse(httpStatus.OK, response);
         } catch (error:any) {
             console.error('Error searching products:', error.message);
 
-            return new ApiResponse(500, { success: false, error: 'Internal server error' });
+            return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { success: false, error: 'Internal server error' });
         }
     }
 
+    public async update(payload: UpdatePayload): Promise<ApiResponse<any>> {
+        try {
+            const { productId, ...updateFields } = payload;
+
+            // Find the product by ID
+            const product = await Product.findById(productId);
+
+            if (!product) {
+                return new ApiResponse(httpStatus.NOT_FOUND, { success: false, error: 'Product not found' });
+            }
+
+            // Update the product fields based on the payload
+            for (const [key, value] of Object.entries(updateFields)) {
+                if (value !== undefined) {
+                    // Only update fields that are defined in the payload
+                    product[key] = value;
+                }
+            }
+
+            // Save the updated product
+            await product.save();
+
+            const updatedProduct = await Product.findById(productId);
+
+            // Additional logic or formatting of the updated product if needed
+            const response = {
+                success: true,
+                data: updatedProduct,
+            };
+
+            return new ApiResponse(httpStatus.OK, response);
+        } catch (error:any) {
+            console.error('Error updating product:', error.message);
+
+            return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { success: false, error: 'Internal server error' });
+        }
+    }
+
+    public async remove(payload: RemovePayload): Promise<ApiResponse<any>> {
+        try {
+            const { productId } = payload;
+
+            // Find the product by ID
+            const product = await Product.findById(productId);
+
+            if (!product) {
+                return new ApiResponse(httpStatus.NOT_FOUND, { success: false, error: 'Product not found' });
+            }
+
+            // Remove the product
+            await product.remove();
+
+            const response = {
+                success: true,
+                message: 'Product removed successfully',
+            };
+
+            return new ApiResponse(httpStatus.OK, response);
+        } catch (error:any) {
+            console.error('Error removing product:', error.message);
+
+            return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { success: false, error: 'Internal server error' });
+        }
+    }
+
+    public async addReview(payload: AddReviewPayload): Promise<ApiResponse<any>> {
+        try {
+            const { userId, productId, review, productRating = '0' } = payload;
+    
+            // Check if the product exists
+            const product = await Product.findById(productId);
+            if (!product) {
+                return new ApiResponse(httpStatus.NOT_FOUND, { success: false, error: 'Product not found' });
+            }
+    
+            // Additional validation or business logic before creating the review
+    
+            const reviewObj = await Review.create({ userId, productId, review, productRating });
+    
+            // Update product rating
+            // (Assuming you've implemented the logic to automatically update the product rating)
+    
+            const response = {
+                success: true,
+                message: 'Review created successfully',
+                data: reviewObj,
+            };
+    
+            // Additional logic after creating the review, if needed
+            return new ApiResponse(httpStatus.CREATED, response); // 201 Created status
+        } catch (error: any) {
+            console.error('Error creating review:', error.message);
+    
+            if (error instanceof ApiError) {
+                // Handle specific ApiError instances
+                return new ApiResponse(error.statusCode, { error: error.message });
+            } else if (error.name === 'ValidationError') {
+                // Handle validation errors (e.g., required fields missing)
+                return new ApiResponse(httpStatus.BAD_REQUEST, { error: 'Validation error', details: error.errors });
+            } else {
+                // Handle other errors
+                return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+            }
+        }
+    }
+
+    public async removeReview(payload: RemoveReviewPayload): Promise<ApiResponse<any>> {
+        try {
+            const { userId, reviewId } = payload;
+    
+            // Check if the review exists
+            const review = await Review.findOne({ _id: reviewId, userId });
+            if (!review) {
+                return new ApiResponse(httpStatus.NOT_FOUND, { success: false, error: 'Review not found' });
+            }
+    
+            // Remove the review
+            await review.remove();
+    
+            const response = {
+                success: true,
+                message: 'Review removed successfully',
+            };
+    
+            return new ApiResponse(httpStatus.OK, response); // 200 OK status
+        } catch (error: any) {
+            console.error('Error removing review:', error.message);
+    
+            if (error instanceof ApiError) {
+                // Handle specific ApiError instances
+                return new ApiResponse(error.statusCode, { error: error.message });
+            } else {
+                // Handle other errors
+                return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+            }
+        }
+    }
+
+    public async getProductRating(payload: GetProductRatingPayload): Promise<ApiResponse<any>> {
+        try {
+            const { productId } = payload;
+    
+            // Check if the product exists
+            const product = await Product.findById(productId);
+            if (!product) {
+                return new ApiResponse(httpStatus.NOT_FOUND, { success: false, error: 'Product not found' });
+            }
+    
+            // Get the average rating from the product
+            const averageRating = product.productRating;
+    
+            const response = {
+                success: true,
+                averageRating,
+            };
+    
+            return new ApiResponse(httpStatus.OK, response); // 200 OK status
+        } catch (error: any) {
+            console.error('Error getting product rating:', error.message);
+    
+            if (error instanceof ApiError) {
+                // Handle specific ApiError instances
+                return new ApiResponse(error.statusCode, { error: error.message });
+            } else {
+                // Handle other errors
+                return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+            }
+        }
+    }
+
+    public async getProductReviews(payload: GetProductReviewsPayload): Promise<ApiResponse<any>> {
+        try {
+            const { page = 1, limit= 10, productId } = payload;
+    
+            // Get reviews for the specified product with pagination
+            const reviews = await Review.find({ productId })
+                .sort({ createdAt: -1 }) // Sort by creation date in descending order
+                .skip((page - 1) * limit)
+                .limit(limit);
+    
+            // Get the total number of reviews for the product
+            const totalReviews = await Review.countDocuments({ productId });
+    
+            const response = {
+                success: true,
+                reviews,
+                totalReviews,
+            };
+    
+            return new ApiResponse(httpStatus.OK, response); // 200 OK status
+        } catch (error: any) {
+            console.error('Error getting product reviews:', error.message);
+    
+            if (error instanceof ApiError) {
+                // Handle specific ApiError instances
+                return new ApiResponse(error.statusCode, { error: error.message });
+            } else {
+                // Handle other errors
+                return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+            }
+        }
+    }
+
+    public async getProduct(payload: GetProductPayload): Promise<ApiResponse<any>> {
+        try {
+            const { productId, reviewsPage = 1, reviewsLimit = 4 } = payload;
+    
+            // Get the product details, including reviews, shop, vendor, and items in category and subcategory
+            const product = await Product.findById(productId)
+            .populate('productCategory') // Populate category
+            .populate('productSubCategory') // Populate subcategory
+            .populate({
+                path: 'reviews',
+                options: { page: reviewsPage, limit: reviewsLimit },
+            }) // Populate reviews with pagination
+            .populate('shop') // Populate shop
+            .populate('vendor') // Populate vendor
+            .populate({
+                path: 'items',
+                populate: [
+                    { path: 'productId', model: 'Product' }, // Assuming 'items' have a 'productId' field referring to 'Product'
+                ],
+            })
+            .exec();
+
+            if (!product) {
+                return new ApiResponse(httpStatus.NOT_FOUND, { error: 'Product not found' });
+            }
+    
+            const response = {
+                success: true,
+                product,
+            };
+    
+            return new ApiResponse(httpStatus.OK, response); // 200 OK status
+        } catch (error: any) {
+            console.error('Error getting product:', error.message);
+    
+            if (error instanceof ApiError) {
+                // Handle specific ApiError instances
+                return new ApiResponse(error.statusCode, { error: error.message });
+            } else {
+                // Handle other errors
+                return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+            }
+        }
+    }
+
+    
 }
 
 export default new ProductService(new EventSender());
@@ -145,287 +446,16 @@ export default new ProductService(new EventSender());
 
 
 
-// const update = async (data: any) => {
-//     const { id, productName, productDisplayName, productDescription, productCategory, productSubCategory, productImages, productPrice, productAmountInStock, productFulfilmentTime } = data;
-//     const product = await Product.findOne({ _id: id });
-
-//     if (product) {
-//         product.productName = productName;
-//         product.productDisplayName = productDisplayName;
-//         product.productDescription = productDescription;
-//         product.productCategory = productCategory;
-//         product.productSubCategory = productSubCategory;
-//         product.productImages = productImages;
-//         product.productPrice = productPrice;
-//         product.productAmountInStock = productAmountInStock;
-//         product.productFulfilmentTime = productFulfilmentTime;
-//         await product.save();
-//     }
-
-//     return product;
-// };//comeback to this later
-
-// const remove = async (productId: Types.ObjectId): Promise<IProduct | null> => {
-//     const product = await Product.findById(productId);
-//     if (!product) {
-//         throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
-//     }
-//     await product.remove();
-//     return product;
-// };
-
-// const searchProductsByName = async (
-//     query: string,
-//     page: number = 1,//default page is 1
-//     pageSize: number = 10//default page size is 10
-// ): Promise<SearchResponse> => {
-//     try {
-//         // Use text index to perform a text search
-//         const results = await Product.searchByText(query);
-//         // Calculate relevance scores based on text score
-//         const searchResults: SearchByNameResult[] = results.map((product) => ({
-//             product,
-//             relevance: product.score || 0,
-//         }));
-//         // Sort the results by relevance in descending order
-//         searchResults.sort((a, b) => b.relevance - a.relevance);
-
-//         // Paginate the results
-//         const startIndex = (page - 1) * pageSize;
-//         const endIndex = startIndex + pageSize;
-//         const paginatedResults = searchResults.slice(startIndex, endIndex);
-
-//         // Create the response object
-//         const response: SearchResponse = {
-//             totalItems: searchResults.length,
-//             totalPages: Math.ceil(searchResults.length / pageSize),
-//             currentPage: page,
-//             pageSize: pageSize,
-//             results: paginatedResults,
-//         };
-
-//         return response;
-//     } catch (error) {
-//         console.error('Error during product search:', error);
-//         throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Internal Server Error');
-//     }
-// };
-
-// const findByCategory = async (
-//     productCategory: string,
-//     page: number = 1,//default page is 1
-//     pageSize: number = 10//default page size is 10 
-//     ): Promise<IProduct[]> => {
-//         try{
-//             //check if category exists
-//             if (!productCategory) {
-//                 throw new ApiError(httpStatus.NOT_FOUND, 'Category not found');
-//             }
-//             const results = await Product.findByCategory(productCategory);
-//             // check if the results are empty
-//             if (results.length === 0) {
-//                 throw new ApiError(httpStatus.NOT_FOUND, 'No products found');
-//             }
-//             //paginate results
-//             const startIndex = (page - 1) * pageSize;
-//             const endIndex = startIndex + pageSize;
-//             const paginatedResults = results.slice(startIndex, endIndex);
-//             return paginatedResults;
-//         } catch (error){
-//             console.error('Error during product search:', error);
-//             throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Internal Server Error');
-//         }
-// }
-
-// const filterByPrice = async (
-//     query: string,
-//     minPrice: number,
-//     maxPrice: number,
-//     page: number = 1,//default page is 1
-//     pageSize: number = 10//default page size is 10 
-//     ): Promise<IProduct[]> => {
-//         try{
-//             //get all products with the query
-//             const results = await Product.searchByText(query);
-//             //filter products by price
-//             const filteredResults = results.filter((product) => product.productPrice >= minPrice && product.productPrice <= maxPrice);
-//             // check if the results are empty
-//             if (filteredResults.length === 0) {
-//                 throw new ApiError(httpStatus.NOT_FOUND, 'No products found');
-//             }
-//             //paginate results
-//             const startIndex = (page - 1) * pageSize;
-//             const endIndex = startIndex + pageSize;
-//             const paginatedResults = filteredResults.slice(startIndex, endIndex);
-//             return paginatedResults;
-//         } catch (error){
-//             console.error('Error during product search:', error);
-//             throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Internal Server Error');
-//         }
-// }
-
-// const filterByPriceAndCategory = async (
-//     query: string,
-//     minPrice: number,
-//     maxPrice: number,
-//     productCategory: string,
-//     page: number = 1,//default page is 1
-//     pageSize: number = 10//default page size is 10 
-//     ): Promise<IProduct[]> => {
-//         try{
-//             //get all products with the query
-//             const results = await Product.searchByText(query);
-//             //filter products by price
-//             const filteredResults = results.filter((product) => product.productPrice >= minPrice && product.productPrice <= maxPrice);
-//             //filter products by category
-//             const filteredResults2 = filteredResults.filter((product) => product.productCategory === productCategory);
-//             // check if the results are empty
-//             if (filteredResults2.length === 0) {
-//                 throw new ApiError(httpStatus.NOT_FOUND, 'No products found');
-//             }
-//             //paginate results
-//             const startIndex = (page - 1) * pageSize;
-//             const endIndex = startIndex + pageSize;
-//             const paginatedResults = filteredResults2.slice(startIndex, endIndex);
-//             return paginatedResults;
-//         } catch (error){
-//             console.error('Error during product search:', error);
-//             throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Internal Server Error');
-//         }
-// }
-
-// const filterByPriceAndSubCategory = async (
-//     query: string,
-//     minPrice: number,
-//     maxPrice: number,
-//     productSubCategory: string,
-//     page: number = 1,//default page is 1
-//     pageSize: number = 10//default page size is 10 
-//     ): Promise<IProduct[]> => {
-//         try{
-//             //get all products with the query
-//             const results = await Product.searchByText(query);
-//             //filter products by price
-//             const filteredResults = results.filter((product) => product.productPrice >= minPrice && product.productPrice <= maxPrice);
-//             //filter products by category
-//             const filteredResults2 = filteredResults.filter((product) => product.productSubCategory === productSubCategory);
-//             // check if the results are empty
-//             if (filteredResults2.length === 0) {
-//                 throw new ApiError(httpStatus.NOT_FOUND, 'No products found');
-//             }
-//             //paginate results
-//             const startIndex = (page - 1) * pageSize;
-//             const endIndex = startIndex + pageSize;
-//             const paginatedResults = filteredResults2.slice(startIndex, endIndex);
-//             return paginatedResults;
-//         } catch (error){
-//             console.error('Error during product search:', error);
-//             throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Internal Server Error');
-//         }
-// }
-
-// const filterByCategory = async (
-//     query: string,
-//     productCategory: string,
-//     page: number = 1,//default page is 1
-//     pageSize: number = 10//default page size is 10 
-//     ): Promise<IProduct[]> => {
-//         try{
-//             //get all products with the query
-//             const results = await Product.searchByText(query);
-//             //filter products by category
-//             const filteredResults = results.filter((product) => product.productCategory === productCategory);
-//             // check if the results are empty
-//             if (filteredResults.length === 0) {
-//                 throw new ApiError(httpStatus.NOT_FOUND, 'No products found');
-//             }
-//             //paginate results
-//             const startIndex = (page - 1) * pageSize;
-//             const endIndex = startIndex + pageSize;
-//             const paginatedResults = filteredResults.slice(startIndex, endIndex);
-//             return paginatedResults;
-//         } catch (error){
-//             console.error('Error during product search:', error);
-//             throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Internal Server Error');
-//         }
-// }
-
-// const filterBySubCategory = async (
-//     query: string,
-//     productSubCategory: string,
-//     page: number = 1,//default page is 1
-//     pageSize: number = 10//default page size is 10 
-//     ): Promise<IProduct[]> => {
-//         try{
-//             //get all products with the query
-//             const results = await Product.searchByText(query);
-//             //filter products by category
-//             const filteredResults = results.filter((product) => product.productSubCategory === productSubCategory);
-//             // check if the results are empty
-//             if (filteredResults.length === 0) {
-//                 throw new ApiError(httpStatus.NOT_FOUND, 'No products found');
-//             }
-//             //paginate results
-//             const startIndex = (page - 1) * pageSize;
-//             const endIndex = startIndex + pageSize;
-//             const paginatedResults = filteredResults.slice(startIndex, endIndex);
-//             return paginatedResults;
-//         } catch (error){
-//             console.error('Error during product search:', error);
-//             throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Internal Server Error');
-//         }
-// }
-
-// const filterByPriceAndSubCategoryAndCategory = async (
-//     query: string,
-//     minPrice: number,
-//     maxPrice: number,
-//     productSubCategory: string,
-//     productCategory: string,
-//     page: number = 1,//default page is 1
-//     pageSize: number = 10//default page size is 10 
-//     ): Promise<IProduct[]> => {
-//         try{
-//             //get all products with the query
-//             const results = await Product.searchByText(query);
-//             //filter products by price
-//             const filteredResults = results.filter((product) => product.productPrice >= minPrice && product.productPrice <= maxPrice);
-//             //filter products by category
-//             const filteredResults2 = filteredResults.filter((product) => product.productSubCategory === productSubCategory);
-//             //filter products by category
-//             const filteredResults3 = filteredResults2.filter((product) => product.productCategory === productCategory);
-//             // check if the results are empty
-//             if (filteredResults3.length === 0) {
-//                 throw new ApiError(httpStatus.NOT_FOUND, 'No products found');
-//             }
-//             //paginate results
-//             const startIndex = (page - 1) * pageSize;
-//             const endIndex = startIndex + pageSize;
-//             const paginatedResults = filteredResults3.slice(startIndex, endIndex);
-//             return paginatedResults;
-//         } catch (error){
-//             console.error('Error during product search:', error);
-//             throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Internal Server Error');
-//         }
-// }
 
 
 
 
 
 
-// export default {
-//     create,
-//     findAll,
-//     searchProductsByName,
-//     update,
-//     remove,
-//     findByCategory,
-//     filterByPrice,
-//     filterByPriceAndCategory,
-//     filterByPriceAndSubCategory,
-//     filterByCategory,
-//     filterBySubCategory,
-//     filterByPriceAndSubCategoryAndCategory,
-//     findById
-// }
+
+
+
+function exec() {
+    throw new Error("Function not implemented.");
+}
+

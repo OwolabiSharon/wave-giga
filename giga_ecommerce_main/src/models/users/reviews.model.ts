@@ -1,10 +1,17 @@
-import { Document, Schema, model,Types} from 'mongoose';
+import { Document, Schema, Model,model,Types} from 'mongoose';
+import Product from "../general/product.model";
 
 export interface IReview extends Document {
     user: Types.ObjectId;
     productId: Types.ObjectId;
     review: string;
     rating: number;
+}
+
+
+interface IReviewModel extends Model<IReview> {
+    calculateAverageRating(productId: Types.ObjectId): Promise<number>;
+    updateProductRating(productId: Types.ObjectId, newRating: number): Promise<void>;
 }
 
 
@@ -18,22 +25,34 @@ const reviewSchema = new Schema<IReview>({
     timestamps: true,
 });
 
-// Static method to calculate the average rating for a product
-reviewSchema.statics.averageRating = async function (productId: Types.ObjectId) {
+reviewSchema.statics.calculateAverageRating = async function (productId: Types.ObjectId) {
     const result = await this.aggregate([
-        {
-        $match: { productId },
-        },
-        {
-        $group: {
-            _id: null,
-            averageRating: { $avg: '$rating' },
-        },
-        },
+        { $match: { productId } },
+        { $group: { _id: null, averageRating: { $avg: '$rating' } } }
     ]);
-    
-    return result.length > 0 ? result[0].averageRating : 0;
-    };
 
-const Review = model<IReview>('Review', reviewSchema);
+    return result.length > 0 ? result[0].averageRating : 0;
+};
+reviewSchema.statics.updateProductRating = async function (productId: Types.ObjectId, newRating: number) {
+    // Assuming you have a Product model
+    const Product = require('../models/product.model');
+
+    // Update the Product document with the new average rating
+    await Product.updateOne({ _id: productId }, { $set: { productRating: newRating } });
+};
+
+reviewSchema.pre('save', async function (next) {
+    const productId = this.productId;
+    const newRating = this.rating;
+
+    // Calculate the updated average rating for the product
+    const updatedAverageRating = await Review.calculateAverageRating(productId);
+
+    // Update the Product document with the new average rating
+    await Review.updateProductRating(productId, updatedAverageRating);
+
+    next();
+});
+
+const Review: IReviewModel = model<IReview, IReviewModel>('Review', reviewSchema);
 export default Review;
