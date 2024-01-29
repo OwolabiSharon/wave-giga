@@ -1,4 +1,4 @@
-import Category from '../models/general/category.model';
+
 import { Schema } from 'mongoose';
 import SubCategory  from '../models/general/subCategory.model';
 import ApiResponse from '../utils/ApiResponse';
@@ -24,13 +24,17 @@ interface getAllProductsPayload {
     subCategoryId: Schema.Types.ObjectId | string;
 }
 
-interface deleteOnePayload {
-    subCategoryName: Schema.Types.ObjectId | string;
+interface deletePayload {
+    subCategoryId: Schema.Types.ObjectId | string;
+}
+
+interface updatePayload {
+    subCategoryId: Schema.Types.ObjectId | string;
+    updatedData: Record<string, unknown>;
 }
 
 
-
-class SubcategoriesService {
+class SubCategoriesService {
     public async createSubCategory(subCategory: CreatePayload): Promise<ApiResponse<any>> {
         try {
             const { subCategoryName, subCategoryDescription, subCategoryImage, subCategoryProducts } = subCategory;
@@ -138,14 +142,14 @@ class SubcategoriesService {
         }
     }
 
-    public async deleteOneSubCategory(payload: deleteOnePayload): Promise<ApiResponse<any>> {
+    public async deleteSubCategory(payload: deletePayload): Promise<ApiResponse<any>> {
         try {
-            const { subCategoryName } = payload;
-            const subCategory = await SubCategory.findOne({ subCategoryName });
+            const { subCategoryId } = payload;
+            const subCategory = await SubCategory.findOne({ subCategoryId });
             if (!subCategory) {
                 throw new ApiError(httpStatus.NOT_FOUND, 'Subcategory not found' );
             }
-            await SubCategory.deleteOne({ subCategoryName });
+            await SubCategory.deleteOne({ subCategoryId });
             const response = {
                 success: true,
                 message: 'Subcategory deleted successfully',
@@ -165,7 +169,36 @@ class SubcategoriesService {
             }
         }
     }
+
+    public async updateSubCategory(payload: updatePayload): Promise<ApiResponse<any>> {
+        try {
+            const { subCategoryId, updatedData } = payload;
+            const subCategory = await SubCategory.findOne({ subCategoryId });
+            if (!subCategory) {
+                throw new ApiError(httpStatus.NOT_FOUND, 'Subcategory not found' );
+            }
+            await SubCategory.updateOne({ subCategoryId }, updatedData);
+            const response = {
+                success: true,
+                message: 'Subcategory updated successfully',
+            }
+            return new ApiResponse(httpStatus.OK, response);
+        } catch (error:any) {
+            console.error('Error updating subcategory:', error.message);
+            if (error instanceof ApiError) {
+                // Handle specific ApiError instances
+                return new ApiResponse(error.statusCode, { error: error.message });
+            } else if (error.name === 'ValidationError') {
+                // Handle validation errors (e.g., required fields missing)
+                return new ApiResponse(httpStatus.BAD_REQUEST, { error: 'Validation error', details: error.errors });
+            } else {
+                // Handle other errors
+                return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+            }
+        }
+    }
 }
 
 
+export default new SubCategoriesService()
 

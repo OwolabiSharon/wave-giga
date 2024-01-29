@@ -14,14 +14,14 @@ const createPayloadSchema = z.object({
 
 const getAllProductsSchema = z.object({
     categoryId: categoryIdSchema,
-    page: z.number().optional(),
-    limit: z.number().optional(),
+    page: z.number().positive().optional(),
+    limit: z.number().positive().optional(),
 });
 
 const getAllSubCategoriesSchema = z.object({
     categoryId: categoryIdSchema,
-    page: z.number().optional(),
-    limit: z.number().optional(),
+    page: z.number().positive().optional(),
+    limit: z.number().positive().optional(),
 });
 
 const deleteOneSchema = z.object({
@@ -47,6 +47,11 @@ const removeSubCategorySchema = z.object({
     subCategoryId: categoryIdSchema,
 });
 
+const getAllSchema = z.object({
+    page: z.number().int().positive().optional(),
+    limit: z.number().int().positive().optional(),
+});
+
 export default {
     createPayloadSchema,
     getAllProductsSchema,
@@ -56,4 +61,5 @@ export default {
     updateSchema,
     addSubCategorySchema,
     removeSubCategorySchema,
+    getAllSchema,
 };
