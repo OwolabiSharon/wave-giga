@@ -12,7 +12,4 @@ router.put('/:categoryId', CategoryController.update);
 router.put('/addsubcategory/:categoryId', CategoryController.addSubCategory);
 router.put('/removesubcategory/:categoryId', CategoryController.removeSubCategory);
 
-
-
-
 export default router;

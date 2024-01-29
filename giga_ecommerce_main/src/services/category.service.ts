@@ -13,37 +13,42 @@ interface CreatePayload {
     categorySubCategories?: Schema.Types.ObjectId[] | string[];
 }
 
-interface GetAllProducts {
+interface GetAllProductsPayload {
     categoryId: Schema.Types.ObjectId | string;
     page?: number;
     limit?: number;
 }
 
-interface GetAllSubCategories {
+interface getAllPayload {
+    page?: number;
+    limit?: number;
+}
+
+interface GetAllSubCategoriesPayload {
     categoryId: Schema.Types.ObjectId | string;
     page?: number;
     limit?: number;
 }
 
-interface DeleteOne {
+interface DeleteOnePayload {
     categoryId: Schema.Types.ObjectId | string;
 }
 
-interface DeleteMultiple {
+interface DeleteMultiplePayload {
     categoryIds: Schema.Types.ObjectId[] | string[];
 }
 
-interface Update {
+interface UpdatePayload {
     categoryId: Schema.Types.ObjectId | string;
     updatedData: any;
 }
 
-interface AddSubCategory {
+interface AddSubCategoryPayload {
     categoryId: Schema.Types.ObjectId | string;
     subCategoryId: Schema.Types.ObjectId | string;
 }
 
-interface RemoveSubCategory {
+interface RemoveSubCategoryPayload {
     categoryId: Schema.Types.ObjectId | string;
     subCategoryId: Schema.Types.ObjectId | string;
 }
@@ -73,7 +78,7 @@ class CategoryService {
         }
     }
 
-    public async getAllProducts(payload: GetAllProducts): Promise<ApiResponse<any>> {
+    public async getAllProducts(payload: GetAllProductsPayload): Promise<ApiResponse<any>> {
         try {
             const { categoryId, page = 1, limit = 10 } = payload;
 
@@ -101,11 +106,20 @@ class CategoryService {
             return new ApiResponse(httpStatus.OK, response);
         } catch (error:any) {
             console.error('Error getting products for category:', error.message);
-            return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { success: false, error: 'Internal server error' });
+            if (error instanceof ApiError) {
+                // Handle specific ApiError instances
+                return new ApiResponse(error.statusCode, { error: error.message });
+            } else if (error.name === 'ValidationError') {
+                // Handle validation errors (e.g., required fields missing)
+                return new ApiResponse(httpStatus.BAD_REQUEST, { error: 'Validation error', details: error.errors });
+            } else {
+                // Handle other errors
+                return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+            }
         }
     }
 
-    public async getAllSubCategories(payload: GetAllSubCategories): Promise<ApiResponse<any>> {
+    public async getAllSubCategories(payload: GetAllSubCategoriesPayload): Promise<ApiResponse<any>> {
         try {
             const { categoryId, page = 1, limit = 10 } = payload;
 
@@ -133,11 +147,20 @@ class CategoryService {
             return new ApiResponse(httpStatus.OK, response);
         } catch (error:any) {
             console.error('Error getting subcategories for category:', error.message);
-            return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { success: false, error: 'Internal server error' });
+            if (error instanceof ApiError) {
+                // Handle specific ApiError instances
+                return new ApiResponse(error.statusCode, { error: error.message });
+            } else if (error.name === 'ValidationError') {
+                // Handle validation errors (e.g., required fields missing)
+                return new ApiResponse(httpStatus.BAD_REQUEST, { error: 'Validation error', details: error.errors });
+            } else {
+                // Handle other errors
+                return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+            }
         }
     }
 
-    public async deleteOne(payload: DeleteOne): Promise<ApiResponse<any>> {
+    public async deleteOne(payload: DeleteOnePayload): Promise<ApiResponse<any>> {
         try {
             const { categoryId } = payload;
 
@@ -159,11 +182,20 @@ class CategoryService {
             return new ApiResponse(httpStatus.OK, response);
         } catch (error:any) {
             console.error('Error removing category:', error.message);
-            return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { success: false, error: 'Internal server error' });
+            if (error instanceof ApiError) {
+                // Handle specific ApiError instances
+                return new ApiResponse(error.statusCode, { error: error.message });
+            } else if (error.name === 'ValidationError') {
+                // Handle validation errors (e.g., required fields missing)
+                return new ApiResponse(httpStatus.BAD_REQUEST, { error: 'Validation error', details: error.errors });
+            } else {
+                // Handle other errors
+                return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+            }
         }
     }
 
-    public async deleteMultiple(payload: DeleteMultiple): Promise<ApiResponse<any>> {
+    public async deleteMultiple(payload: DeleteMultiplePayload): Promise<ApiResponse<any>> {
         try {
             const { categoryIds } = payload;
 
@@ -185,12 +217,23 @@ class CategoryService {
             return new ApiResponse(httpStatus.OK, response);
         } catch (error:any) {
             console.error('Error removing categories:', error.message);
-            return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { success: false, error: 'Internal server error' });
+            if (error instanceof ApiError) {
+                // Handle specific ApiError instances
+                return new ApiResponse(error.statusCode, { error: error.message });
+            } else if (error.name === 'ValidationError') {
+                // Handle validation errors (e.g., required fields missing)
+                return new ApiResponse(httpStatus.BAD_REQUEST, { error: 'Validation error', details: error.errors });
+            } else {
+                // Handle other errors
+                return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+            }
         }
     }
 
-    public async getAll() : Promise<ApiResponse<any>>{
+    public async getAll(payload:getAllPayload) : Promise<ApiResponse<any>>{
         try {
+            const { page = 1, limit = 10 } = payload;
+
             const categories = await Category.find();
 
             // Case: No categories exist
@@ -198,10 +241,21 @@ class CategoryService {
                 throw new ApiError(httpStatus.NOT_FOUND, 'No categories exist');
             }
 
+            const totalCategories = categories.length;
+            const skip = (page - 1) * limit;
+            const Categories = categories.slice(skip, skip + limit);
+
+
+
             // Case: Categories exist
             const response = {
                 success: true,
-                data: categories,
+                data: {
+                    Categories,
+                    totalPages: Math.ceil(totalCategories / limit),
+                    currentPage: page,
+                    totalResults: totalCategories
+                }
             };
 
             return new ApiResponse(httpStatus.OK, response);
@@ -211,7 +265,7 @@ class CategoryService {
         }
     }
 
-    public async update(payload: Update): Promise<ApiResponse<any>> {
+    public async update(payload: UpdatePayload): Promise<ApiResponse<any>> {
         try {
             const { categoryId, updatedData } = payload;
     
@@ -244,11 +298,20 @@ class CategoryService {
             return new ApiResponse(httpStatus.OK, response);
         } catch (error:any) {
             console.error('Error updating category:', error.message);
-            return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { success: false, error: 'Internal server error' });
+            if (error instanceof ApiError) {
+                // Handle specific ApiError instances
+                return new ApiResponse(error.statusCode, { error: error.message });
+            } else if (error.name === 'ValidationError') {
+                // Handle validation errors (e.g., required fields missing)
+                return new ApiResponse(httpStatus.BAD_REQUEST, { error: 'Validation error', details: error.errors });
+            } else {
+                // Handle other errors
+                return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+            }
         }
     }
 
-    public async addSubCategory(payload: AddSubCategory): Promise<ApiResponse<any>> {
+    public async addSubCategory(payload: AddSubCategoryPayload): Promise<ApiResponse<any>> {
         try {
             const { categoryId, subCategoryId } = payload;
 
@@ -272,11 +335,20 @@ class CategoryService {
             return new ApiResponse(httpStatus.OK, response);
         } catch (error:any) {
             console.error('Error adding subcategory to category:', error.message);
-            return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { success: false, error: 'Internal server error' });
+            if (error instanceof ApiError) {
+                // Handle specific ApiError instances
+                return new ApiResponse(error.statusCode, { error: error.message });
+            } else if (error.name === 'ValidationError') {
+                // Handle validation errors (e.g., required fields missing)
+                return new ApiResponse(httpStatus.BAD_REQUEST, { error: 'Validation error', details: error.errors });
+            } else {
+                // Handle other errors
+                return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+            }
         }
     }
 
-    public async removeSubCategory(payload: RemoveSubCategory): Promise<ApiResponse<any>> {
+    public async removeSubCategory(payload: RemoveSubCategoryPayload): Promise<ApiResponse<any>> {
         try {
             const { categoryId, subCategoryId } = payload;
 
@@ -300,7 +372,16 @@ class CategoryService {
             return new ApiResponse(httpStatus.OK, response);
         } catch (error:any) {
             console.error('Error removing subcategory from category:', error.message);
-            return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { success: false, error: 'Internal server error' });
+            if (error instanceof ApiError) {
+                // Handle specific ApiError instances
+                return new ApiResponse(error.statusCode, { error: error.message });
+            } else if (error.name === 'ValidationError') {
+                // Handle validation errors (e.g., required fields missing)
+                return new ApiResponse(httpStatus.BAD_REQUEST, { error: 'Validation error', details: error.errors });
+            } else {
+                // Handle other errors
+                return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+            }
         }
     }
 

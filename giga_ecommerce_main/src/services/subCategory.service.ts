@@ -1,84 +1,171 @@
 import Category from '../models/general/category.model';
+import { Schema } from 'mongoose';
 import SubCategory  from '../models/general/subCategory.model';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import httpStatus from 'http-status'
 
+interface CreatePayload {
+    subCategoryName: string;
+    subCategoryDescription: string;
+    subCategoryImage: string;
+    subCategoryProducts?: string[];
 
-const createSubCategory = async (subCategory: any) => {
-    // Check if category name is provided
-    if (!subCategory || !subCategory.subCategoryName) {
-        throw new ApiError(httpStatus.BAD_REQUEST, 'Subcategory name is required');
+}
+
+interface getAllPayload {
+    page?: number;
+    limit?: number;
+}
+
+interface getAllProductsPayload {
+    page?: number;
+    limit?: number;
+    subCategoryId: Schema.Types.ObjectId | string;
+}
+
+interface deleteOnePayload {
+    subCategoryName: Schema.Types.ObjectId | string;
+}
+
+
+
+class SubcategoriesService {
+    public async createSubCategory(subCategory: CreatePayload): Promise<ApiResponse<any>> {
+        try {
+            const { subCategoryName, subCategoryDescription, subCategoryImage, subCategoryProducts } = subCategory;
+            //check if subCategory name already exists
+            const subCategoryExists = await SubCategory.doesSubCategoryExist(subCategoryName);
+            if (subCategoryExists) {
+                throw new ApiError(httpStatus.BAD_REQUEST, 'Subcategory already exists' );
+            }
+            
+            const createdSubCategory = await SubCategory.create({ subCategoryName, subCategoryDescription, subCategoryImage, subCategoryProducts: subCategoryProducts ? subCategoryProducts : []});
+
+            const response ={
+                success: true,
+                message: 'Subcategory created successfully',
+                data: createdSubCategory
+            }
+            return new ApiResponse(httpStatus.CREATED, response);
+        } catch (error:any) {
+            console.error('Error creating subCategory:', error.message);
+            if (error instanceof ApiError) {
+                // Handle specific ApiError instances
+                return new ApiResponse(error.statusCode, { error: error.message });
+            } else if (error.name === 'ValidationError') {
+                // Handle validation errors (e.g., required fields missing)
+                return new ApiResponse(httpStatus.BAD_REQUEST, { error: 'Validation error', details: error.errors });
+            } else {
+                // Handle other errors
+                return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+            }
+        }
     }
 
-    // Check if subcategory already exists
-    if (await SubCategory.isSubCategoryNameTaken(subCategory.subCategoryName)) {
-        throw new ApiError(httpStatus.BAD_REQUEST, 'Subcategory name already taken');
+    public async getAllSubCategories(payload: getAllPayload): Promise<ApiResponse<any>> {
+        try {
+            const { page = 1, limit = 10 } = payload;
+            const subCategories = await SubCategory.find({});
+
+            const totalSubCategories = subCategories.length;
+            const totalPages = Math.ceil(totalSubCategories / limit);
+            const offset = limit * (page - 1);
+            const paginatedSubCategories = subCategories.slice(offset, offset + limit);
+
+            const response = {
+                success: true,
+                message: 'Subcategories fetched successfully',
+                data: {
+                    subCategories: paginatedSubCategories,
+                    totalPages,
+                    currentPage: page,
+                    totalSubCategories
+                }
+            }
+            return new ApiResponse(httpStatus.OK, response);
+        } catch (error:any) {
+            console.error('Error fetching subcategories:', error.message);
+            if (error instanceof ApiError) {
+                // Handle specific ApiError instances
+                return new ApiResponse(error.statusCode, { error: error.message });
+            } else if (error.name === 'ValidationError') {
+                // Handle validation errors (e.g., required fields missing)
+                return new ApiResponse(httpStatus.BAD_REQUEST, { error: 'Validation error', details: error.errors });
+            } else {
+                // Handle other errors
+                return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+            }
+        }
     }
-    // Check if subcategoryBody has valid properties
-    const validProperties = ['subCategoryName', 'subCategoryDescription', 'subCategoryImage'];
-    const isValidBody = validProperties.every(prop => subCategory.hasOwnProperty(prop));
+    
+    public getAllProductsBySubCategory = async (payload: getAllProductsPayload): Promise<ApiResponse<any>> => {
+        try {
+            const { page = 1, limit = 10, subCategoryId } = payload;
+            const subCategory = await SubCategory.findById(subCategoryId);
+            if (!subCategory) {
+                return new ApiResponse(httpStatus.NOT_FOUND, { success: false, error: 'Subcategory not found' });
+            }
+            const products = subCategory.subCategoryProducts;
+            const totalProducts = products.length;
+            const totalPages = Math.ceil(totalProducts / limit);
+            const offset = limit * (page - 1);
+            const paginatedProducts = products.slice(offset, offset + limit);
 
-    if (!isValidBody) {
-        throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid subcategory body');
+            const response = {
+                success: true,
+                message: 'Products fetched successfully',
+                data: {
+                    products: paginatedProducts,
+                    totalPages,
+                    currentPage: page,
+                    totalProducts
+                }
+            }
+            return new ApiResponse(httpStatus.OK, response);
+        } catch (error:any) {
+            console.error('Error fetching products:', error.message);
+            if (error instanceof ApiError) {
+                // Handle specific ApiError instances
+                return new ApiResponse(error.statusCode, { error: error.message });
+            } else if (error.name === 'ValidationError') {
+                // Handle validation errors (e.g., required fields missing)
+                return new ApiResponse(httpStatus.BAD_REQUEST, { error: 'Validation error', details: error.errors });
+            } else {
+                // Handle other errors
+                return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+            }
+        }
     }
 
-    // Check if the subcategory was created successfully
-    const createdSubCategory = await SubCategory.create(subCategory);
-    if (!createdSubCategory) {
-        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to create subcategory');
+    public async deleteOneSubCategory(payload: deleteOnePayload): Promise<ApiResponse<any>> {
+        try {
+            const { subCategoryName } = payload;
+            const subCategory = await SubCategory.findOne({ subCategoryName });
+            if (!subCategory) {
+                throw new ApiError(httpStatus.NOT_FOUND, 'Subcategory not found' );
+            }
+            await SubCategory.deleteOne({ subCategoryName });
+            const response = {
+                success: true,
+                message: 'Subcategory deleted successfully',
+            }
+            return new ApiResponse(httpStatus.OK, response);
+        } catch (error:any) {
+            console.error('Error deleting subcategory:', error.message);
+            if (error instanceof ApiError) {
+                // Handle specific ApiError instances
+                return new ApiResponse(error.statusCode, { error: error.message });
+            } else if (error.name === 'ValidationError') {
+                // Handle validation errors (e.g., required fields missing)
+                return new ApiResponse(httpStatus.BAD_REQUEST, { error: 'Validation error', details: error.errors });
+            } else {
+                // Handle other errors
+                return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+            }
+        }
     }
+}
 
-    return createdSubCategory;
-};
 
-const findAllSubCategories = async () => {
-    const subCategories = await SubCategory.find();
-
-    // Case: No subcategories exist
-    if (subCategories.length === 0) {
-        throw new ApiError(httpStatus.NOT_FOUND, 'No subcategories exist');
-    }
-
-    // Case: Subcategories exist
-    return subCategories;
-};
-
-const findOneSubCategory = async (subCategoryName: string) => {
-    // Check if subcategory name is provided
-    if (!subCategoryName) {
-        throw new ApiError(httpStatus.BAD_REQUEST, 'Subcategory name is required');
-    }
-
-    // Check if subcategory exists
-    const subCategory = await SubCategory.findOne({ subCategoryName });
-    if (!subCategory) {
-        throw new ApiError(httpStatus.NOT_FOUND, 'Subcategory not found');
-    }
-
-    // Case: Subcategory exists
-    return subCategory;
-};
-
-const deleteOneSubCategory = async (subCategoryName: string) => {
-    // Check if subcategory name is provided
-    if (!subCategoryName) {
-        throw new ApiError(httpStatus.BAD_REQUEST, 'Subcategory name is required');
-    }
-
-    // Check if subcategory exists
-    const subCategory = await SubCategory.findOne({ subCategoryName });
-    if (!subCategory) {
-        throw new ApiError(httpStatus.NOT_FOUND, 'Subcategory not found');
-    }
-
-    // Check if subcategory was deleted successfully
-    const deletedSubCategory = await SubCategory.deleteOne({ subCategoryName });
-    if (!deletedSubCategory) {
-        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to delete subcategory');
-    }
-
-    // Case: Subcategory was deleted successfully
-    return deletedSubCategory;
-};
 
