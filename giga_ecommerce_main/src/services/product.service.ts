@@ -1,10 +1,13 @@
+import SubCategory from "../models/general/subCategory.model";
+
+import Category from "../models/general/category.model";
 import Product from "../models/general/product.model";
 import Review from "../models/users/reviews.model";
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import httpStatus from 'http-status';
 import { Schema } from 'mongoose';
-import { query } from 'express';
+
 
 
 interface GetPopularProductsPayload {
@@ -29,12 +32,11 @@ interface GetProductRatingPayload {
 
 interface createProductPayload {
     vendor: Schema.Types.ObjectId |string;
-    shop: Schema.Types.ObjectId |string;
     productName: string;
     productDisplayName: string;
     productDescription: string;
-    productCategory: string;
-    productSubCategory: string;
+    productCategory: Schema.Types.ObjectId |string;
+    productSubCategory: Schema.Types.ObjectId |string;
     productImages: string[];
     productPrice: number;
     productAmountInStock: number;
@@ -66,7 +68,7 @@ interface SearchPayload {
     sort?: string;
     category?: string;
     subCategory?: string;
-    shop?: string;
+    vendor?: string;
     minPrice?: number; 
     maxPrice?: number;
 }
@@ -92,11 +94,23 @@ interface RemovePayload {
 export class ProductService {
     public async create(payload: createProductPayload): Promise<ApiResponse<any>> {
         try {
-            const { vendor, shop, productName, productDisplayName, productDescription, productCategory, productSubCategory, productImages, productPrice, productAmountInStock, productFulfilmentTime } = payload;
-            
+            const { vendor, productName, productDisplayName, productDescription, productCategory, productSubCategory, productImages, productPrice, productAmountInStock, productFulfilmentTime } = payload;
+            //extra edge cases 
+            // if category does not exist
+            const category = await Category.findById(productCategory);
+            if (!category) {
+                return new ApiResponse(httpStatus.NOT_FOUND, { success: false, error: 'Category not found' });
+            }
+            // if subcategory does not exist
+            const subCategory = await SubCategory.findById(productSubCategory);
+            if (!subCategory) {
+                return new ApiResponse(httpStatus.NOT_FOUND, { success: false, error: 'Subcategory not found' });
+            }
+            //if vendor exists
+
             // Additional validation or business logic before creating the product
     
-            const product = await Product.create({ vendor, shop, productName, productDisplayName, productDescription, productCategory, productSubCategory, productImages, productPrice, productAmountInStock, productFulfilmentTime });
+            const product = await Product.create({ vendor, productName, productDisplayName, productDescription, productCategory, productSubCategory, productImages, productPrice, productAmountInStock, productFulfilmentTime });
 
             // Additional logic after creating the product, if needed
             return new ApiResponse(httpStatus.CREATED, { success: true, data: product.toObject() }); // 201 Created status
@@ -117,7 +131,7 @@ export class ProductService {
     }
 
     public async search(payload: SearchPayload): Promise<ApiResponse<any>> {
-        const { page = 1, limit = 10, product = '', rating = 0, sort = '', category = 'All', subCategory = 'All', shop = '', minPrice = 0, maxPrice = Infinity } = payload;
+        const { page = 1, limit = 10, product = '', rating = 0, sort = '', category = 'All', subCategory = 'All', vendor = '', minPrice = 0, maxPrice = Infinity } = payload;
 
         const skip = (page - 1) * limit;
 
@@ -140,9 +154,9 @@ export class ProductService {
             query.productSubCategory = subCategory;
         }
 
-        if (shop) {
-            // Assuming shop is the shop name
-            query.shop = shop;
+        if (vendor) {
+            // Assuming vendor is the vendor name
+            query.vendor = vendor;
         }
 
         query.productPrice = { $gte: minPrice, $lte: maxPrice };
@@ -390,7 +404,7 @@ export class ProductService {
         try {
             const { productId, reviewsPage = 1, reviewsLimit = 4 } = payload;
     
-            // Get the product details, including reviews, shop, vendor, and items in category and subcategory
+            // Get the product details, including reviews,  vendor, and items in category and subcategory
             const product = await Product.findById(productId)
             .populate('productCategory') // Populate category
             .populate('productSubCategory') // Populate subcategory
@@ -398,7 +412,6 @@ export class ProductService {
                 path: 'reviews',
                 options: { page: reviewsPage, limit: reviewsLimit },
             }) // Populate reviews with pagination
-            .populate('shop') // Populate shop
             .populate('vendor') // Populate vendor
             .populate({
                 path: 'items',

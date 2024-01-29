@@ -1,5 +1,6 @@
-import { PaginatedResults, paginate } from '../models/general/paginate.model';
+import Category from '../models/general/category.model';
 import SubCategory  from '../models/general/subCategory.model';
+import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import httpStatus from 'http-status'
 

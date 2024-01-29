@@ -30,14 +30,15 @@ const createProductSchema = z.object({
     vendor: z.string().refine(value => mongoose.Types.ObjectId.isValid(value) || typeof value === 'string', {
         message: "Invalid vendorId",
     }),
-    shop: z.string().refine(value => mongoose.Types.ObjectId.isValid(value) || typeof value === 'string', {
-        message: "Invalid shopId",
-    }),
     productName: z.string().min(1),
     productDisplayName: z.string().min(1),
     productDescription: z.string().min(1),
-    productCategory: z.string().min(1),
-    productSubCategory: z.string().min(1),
+    productCategory:  z.string().refine(value => mongoose.Types.ObjectId.isValid(value) || typeof value === 'string', {
+        message: "Invalid CategoryId",
+    }),
+    productSubCategory:  z.string().refine(value => mongoose.Types.ObjectId.isValid(value) || typeof value === 'string', {
+        message: "Invalid CategoryId",
+    }),
     productImages: z.array(z.string()).min(1),
     productPrice: z.number().min(1),
     productAmountInStock: z.number().min(1),

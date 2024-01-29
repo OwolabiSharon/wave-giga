@@ -29,7 +29,6 @@ interface IProductModel extends Model<IProduct> {
 
 const productSchema = new Schema<IProduct>({
     vendor: { type: Schema.Types.ObjectId, ref: 'vendor', required: true },
-    shop: { type: Schema.Types.ObjectId, ref: 'Shop', required: true },
     productName: { type: String, required: true },
     productDisplayName: { type: String, required: true },
     productDescription: { type: String, required: true },
