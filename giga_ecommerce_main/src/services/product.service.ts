@@ -1,12 +1,10 @@
 import Product from "../models/general/product.model";
 import Review from "../models/users/reviews.model";
-import { EventSender } from '../utils/eventSystem';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import httpStatus from 'http-status';
 import { Schema } from 'mongoose';
 import { query } from 'express';
-
 
 
 interface GetPopularProductsPayload {
@@ -22,16 +20,16 @@ interface GetNewProductsPayload {
 interface GetProductReviewsPayload {
     page?: number;
     limit?: number;
-    productId: Schema.Types.ObjectId;
+    productId: Schema.Types.ObjectId | string;
 }
 
 interface GetProductRatingPayload {
-    productId: Schema.Types.ObjectId;
+    productId: Schema.Types.ObjectId | string;
 }
 
 interface createProductPayload {
-    vendor: Schema.Types.ObjectId;
-    shop: Schema.Types.ObjectId;
+    vendor: Schema.Types.ObjectId |string;
+    shop: Schema.Types.ObjectId |string;
     productName: string;
     productDisplayName: string;
     productDescription: string;
@@ -43,19 +41,19 @@ interface createProductPayload {
     productFulfilmentTime: number;
 }
 interface RemoveReviewPayload {
-    userId: Schema.Types.ObjectId;
-    reviewId: Schema.Types.ObjectId;
+    userId: Schema.Types.ObjectId | string;
+    reviewId: Schema.Types.ObjectId | string;
 }
 
 interface GetProductPayload {
     reviewsPage?: number;
     reviewsLimit?: number;
-    productId: Schema.Types.ObjectId;
+    productId: Schema.Types.ObjectId | string;
 }
 
 interface AddReviewPayload {
-    userId: Schema.Types.ObjectId;
-    productId: Schema.Types.ObjectId;
+    userId: Schema.Types.ObjectId| string;
+    productId: Schema.Types.ObjectId| string;
     review: string;
     productRating?: number;
 }
@@ -74,7 +72,7 @@ interface SearchPayload {
 }
 
 interface UpdatePayload {
-    productId: Schema.Types.ObjectId;
+    productId: Schema.Types.ObjectId | string;
     productName?: string;
     productDisplayName?: string;
     productDescription?: string;
@@ -87,17 +85,11 @@ interface UpdatePayload {
 }
 
 interface RemovePayload {
-    productId: Schema.Types.ObjectId;
+    productId: Schema.Types.ObjectId| string;
 }
 
 
 export class ProductService {
-    private eventSender: EventSender;
-
-    constructor(eventSender: EventSender) {
-        this.eventSender = eventSender;
-    }
-
     public async create(payload: createProductPayload): Promise<ApiResponse<any>> {
         try {
             const { vendor, shop, productName, productDisplayName, productDescription, productCategory, productSubCategory, productImages, productPrice, productAmountInStock, productFulfilmentTime } = payload;
@@ -519,26 +511,27 @@ export class ProductService {
         }
     }
 
+    public async getAllProducts(): Promise<ApiResponse<any>> {
+        try {
+            const products = await Product.find();
+            const response = {
+                success: true,
+                data: products,
+            };
+
+            return new ApiResponse(httpStatus.OK, response);
+        } catch (error: any) {
+            console.error('Error getting all products:', error.message);
+            // Handle errors and return an appropriate ApiResponse
+            return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+        }
+    }
+
 }
 
-export default new ProductService(new EventSender());
+export default new ProductService();
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-function exec() {
-    throw new Error("Function not implemented.");
-}
 

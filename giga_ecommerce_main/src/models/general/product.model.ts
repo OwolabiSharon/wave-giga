@@ -24,6 +24,7 @@ interface IProductModel extends Model<IProduct> {
     searchByText(query: string): Promise<IProduct[]>;
     findByCategory(productCategory: string): Promise<IProduct[]>;
     getHighestSales(): Promise<number>;
+    getProductObjectId(productName: string, vendorId:any): Promise<Types.ObjectId>;
 }
 
 const productSchema = new Schema<IProduct>({
@@ -87,6 +88,11 @@ productSchema.pre('save', async function (next) {
     }
     next();
 });
+
+productSchema.statics.getProductObjectId = async function (productName: string, vendorId:any): Promise<Types.ObjectId> {
+    const product = await this.findOne({ productName });
+    return product._id;
+};
 
 
 const Product: IProductModel = model<IProduct, IProductModel>('Product', productSchema);
