@@ -1,7 +1,7 @@
 import { Router } from "express";
 import productApi from "./products.routes";
 import cartApi from "./cart.routes";
-import sellerApi from "./seller.route";
+import sellerApi from "./vendor.route";
 import categoryApi from "./category.routes";
 
 

@@ -15,11 +15,11 @@ export class EventSender {
     constructor() {
         // Dictionary to map event services to their base URLs
         this.serviceUrlDict = {
-            user: process.env.USER_SERVICE_URL!,
-            payment: process.env.PAYMENT_SERVICE_URL!,
-            ecommerce: process.env.ECOMMERCE_SERVICE_URL!, 
-            taxi: process.env.TAXI_SERVICE_URL!,
-            hotel: process.env.HOTEL_SERVICE_URL!,
+          user: process.env.USER_SERVICE_URL!,
+          payment: process.env.PAYMENT_SERVICE_URL!,
+          ecommerce: process.env.ECOMMERCE_SERVICE_URL!, 
+          taxi: process.env.TAXI_SERVICE_URL!,
+          hotel: process.env.HOTEL_SERVICE_URL!,
         };
     }
     
@@ -51,8 +51,6 @@ export class EventSender {
             throw error;
         });
     }
-
-    
 
 }
 
