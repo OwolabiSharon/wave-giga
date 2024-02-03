@@ -63,18 +63,29 @@ export class CartService {
     public async createCart(payload: CreateCartPayload): Promise<ApiResponse<any>> {
         try{
             const { userId } = payload;
+            let response;
             //check if cart with userId exists
             const existingCart = await Cart.findOne({ userId });
             if (existingCart) {
                 const existingCart = this.getCartByUserId({ userId }); // Fix: Pass userId as an object
-                return existingCart;
+                response ={
+                    success: true,
+                    meta: {
+                        userId: userId,
+                    },
+                    data: {
+                        message: 'Cart already exists',
+                        cart: existingCart
+                    }
+                }
+                return new ApiResponse(httpStatus.OK, response);
             }
             //create new cart
             const cart = await Cart.create(payload);
             //populate cart with items
             const populatedCart = await Cart.populate(cart, 'items.productId');
             //return empty class with populated items
-            const response ={
+            response ={
                 success: true,
                 data: {
                     message: 'Cart created successfully',
@@ -147,8 +158,9 @@ export class CartService {
         }
     }
 
-    public async clearCart(userId: string): Promise<ApiResponse<any>> {
+    public async clearCart(payload:DeleteCartPayload): Promise<ApiResponse<any>> {
         try{
+            const { userId } = payload;
             const cart = await Cart.findOne({ userId });
             if (!cart) {
             throw new ApiError(httpStatus.NOT_FOUND, 'Cart not found');
@@ -280,25 +292,35 @@ export class CartService {
         }
     }
 
-    public async removeCartItem(payload:DeleteCartPayload): Promise<ApiResponse<any>> {
+    public async deleteCartItem(payload:RemoveCartItemPayload): Promise<ApiResponse<any>> {
         try{
             const { userId } = payload;
             let cart = await Cart.findOne({ userId });
 
             if (!cart) {
-            throw new ApiError(httpStatus.NOT_FOUND, 'Cart not found');
+                throw new ApiError(httpStatus.NOT_FOUND, 'Cart not found');
             }
-
-            //remove all items from cart
-            cart.items = [];
-
+            const { productId, quantity } = payload;
+            // Find the cart item with the specified productId, if it exists the productId will be an object id
+            const existingItem = cart.items.find(item => item.productId.toString() === productId.toString());
+            if (!existingItem) {
+                throw new ApiError(httpStatus.NOT_FOUND, 'Item not found');
+            }
+            // If the product already exists, update the quantity
+            existingItem.quantity -= quantity;
+            //if the quantity is 0 remove the item from the cart
+            if(existingItem.quantity === 0){
+                cart.items = cart.items.filter(item => item.productId.toString() !== productId.toString());
+            }
             // Save the updated cart
             await cart.save();
+            //return populated cart and response message that cart was updated
+            cart = await Cart.populate(cart, 'items.productId');
             //on success return the cart with message cart cleared
             const response ={
                 success: true,
                 data: {
-                    message: 'Cart cleared successfully',
+                    message: 'Item removed successfully',
                     cart: cart
                 }
             }
@@ -331,12 +353,53 @@ export class CartService {
             const totalPrice = cart.getTotalPrice();
 
             //use emmiter to send event to payment service
-            this.eventSender.sendEvent({
+            const CheckOutStatus= this.eventSender.sendEvent({
                 service: 'payment',
                 name: 'createPayment',
                 payload: { userId, totalPrice, paymentMethod, shippingAddress },
             });
-            
+            //if payment service responds with success clear the cart
+            if(await CheckOutStatus === 'success' ){
+                cart.items = [];
+                await cart.save();
+                const response ={
+                    success: true,
+                    data: {
+                        message: 'Checkout successful',
+                        cart: cart
+                    }
+                }
+                return new ApiResponse(httpStatus.CREATED, response);
+            }
+            if(await CheckOutStatus === 'error' ){
+                const response ={
+                    success: true,
+                    metaData: {
+                        userId: userId,
+                    },
+                    data: {
+                        message: 'Checkout failed',
+                        cart: cart
+                    }
+                }
+                return new ApiResponse(httpStatus.CREATED, response);
+            }
+            //else return the cart with a record of timeStamp of the checkout,payment response,
+            //and the cart items  
+            const timeStamp = new Date();
+            const response ={
+                success: true,
+                metaData: {
+                    userId: userId,
+                },
+                data:{
+                    message: 'Checkout failed',
+                    timeStamp: timeStamp,
+                    paymentResponse: CheckOutStatus,
+                    cart: cart
+                }
+            }
+            return new ApiResponse(httpStatus.CREATED, response);
         }catch(error:any){
             console.error('Error checking out:', error.message);
             if (error instanceof ApiError) {
@@ -352,7 +415,52 @@ export class CartService {
         }
     }
 
-    
+    public async addCartItem(payload: AddCartItemPayload): Promise<ApiResponse<any>> {
+        try{
+            const { userId, productId, quantity, price } = payload;
+            let cart = await Cart.findOne({ userId });
+            
+            if (!cart) {
+            //create new cart
+            cart = await Cart.create({ userId });
+            }
+
+            // Find the cart item with the specified productId, if it exists the productId will be an object id
+            const existingItem = cart.items.find(item => item.productId.toString() === productId.toString());
+            if (existingItem) {
+                // If the product already exists, update the quantity
+                existingItem.quantity += quantity;
+            } else {
+                // If the product doesn't exist, add a new item
+                cart.items.push({ productId, quantity, price });
+            }
+
+            // Save the updated cart
+            await cart.save();
+            //return populated cart and response message that cart was updated
+            const populatedCart = await Cart.populate(cart, 'items.productId');
+            const response ={
+                success: true,
+                data: {
+                    message: 'Cart updated successfully',
+                    cart: populatedCart
+                }
+            }
+            return new ApiResponse(httpStatus.CREATED, response);
+        }catch(error:any){
+            console.error('Error adding item to cart:', error.message);
+            if (error instanceof ApiError) {
+                // Handle specific ApiError instances
+                return new ApiResponse(error.statusCode, { error: error.message });
+            } else if (error.name === 'ValidationError') {
+                // Handle validation errors (e.g., required fields missing)
+                return new ApiResponse(httpStatus.BAD_REQUEST, { error: 'Validation error', details: error.errors });
+            } else {
+                // Handle other errors
+                return new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, { error: 'Internal server error' });
+            }
+        }
+    }
 }
 
 export default new CartService(new EventSender());
