@@ -1,12 +1,14 @@
 import { Router } from 'express';
 import { ProductService } from '../services/product.service';
 import ProductController from '../controllers/product.controller';
+import { getAllEndpointsHandler } from '../utils/endpointsUtil';
 
 const router = Router();
 const productService = new ProductService();
 const productController: ProductController = new ProductController(productService);
+const allEndpointsHandler = getAllEndpointsHandler(router);
 
-
+router.get('/all-endpoints', allEndpointsHandler);
 router.get('/', productController.getAll);
 router.get('/search', productController.search);
 router.get('/get-product-rating', productController.getProductRating);

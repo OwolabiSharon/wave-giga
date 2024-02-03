@@ -45,7 +45,7 @@ const createCard = async (cardNumber: string, cardHolderName: string, cardExpiry
         "tx_ref": generateTransactionReference(),
         "enckey": 'FLWSECK_TEST8f058b3579bb',
       "redirect_url":"https://www,flutterwave.ng"
-   };
+  };
 
       const response = await flutterwave.Charge.card(details);
       console.log(response);
@@ -92,7 +92,7 @@ const validateTransaction = async (flutterwaveReference: string, otp: string, us
         token: verifyTransaction?.data.card.token 
     });
     eventSender.sendEvent({
-      name: 'addCard',
+      name: '/main/v1/addCard',
       service: 'user', // Assuming 'user' is the service name
       payload: {data: creditCard, userId: userId },
     })
@@ -118,4 +118,4 @@ export default {
     createCard, 
     validateTransaction,
     payFee
- };
+};

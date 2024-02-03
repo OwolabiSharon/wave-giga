@@ -1,5 +1,4 @@
 import SubCategory from "../models/general/subCategory.model";
-
 import Category from "../models/general/category.model";
 import Product from "../models/general/product.model";
 import Review from "../models/users/reviews.model";
@@ -90,6 +89,10 @@ interface RemovePayload {
     productId: Schema.Types.ObjectId| string;
 }
 
+interface GetAllProducts{
+    page?:number,
+    limit?:number
+}
 
 export class ProductService {
     public async create(payload: createProductPayload): Promise<ApiResponse<any>> {
@@ -524,12 +527,28 @@ export class ProductService {
         }
     }
 
-    public async getAllProducts(): Promise<ApiResponse<any>> {
+    public async getAllProducts(payload:GetAllProducts): Promise<ApiResponse<any>> {
         try {
-            const products = await Product.find();
+            const {page= 1, limit=10}= payload;
+            const skip = (page - 1) * limit;
+
+            const products = await Product.find()
+            .skip(skip)
+            .limit(limit)
+            .populate('productCategory', 'categoryName') 
+            .populate('productSubCategory', 'subCategoryName'); 
+
+
+            const totalDocs = products.length 
+            const totalPages = Math.ceil(totalDocs / limit);
             const response = {
                 success: true,
-                data: products,
+                data: {
+                    products,
+                    totalPages,
+                    currentPage: page,
+                    totalResults: totalDocs
+                }
             };
 
             return new ApiResponse(httpStatus.OK, response);

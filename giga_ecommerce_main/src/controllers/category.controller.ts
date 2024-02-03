@@ -22,7 +22,8 @@ class CategoryController {
 
     public getAll = async (req: Request, res: Response): Promise<void> => {
         try {
-            const response = await categoryService.getAll();
+            const payload = CategoryZod.getAllSchema.parse(req.query);
+            const response = await categoryService.getAll(payload);
             res.status(response.status).json(response);
         } catch (error: any) {
             console.error('Error getting all categories:', error.message);

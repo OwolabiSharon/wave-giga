@@ -1,11 +1,15 @@
 import { Router } from "express";
 import productApi from "./products.routes";
 import cartApi from "./cart.routes";
-import sellerApi from "./seller.route";
+import sellerApi from "./vendor.route";
 import categoryApi from "./category.routes";
+import { getAllEndpointsHandler } from '../utils/endpointsUtil';
 
 
 const router = Router();
+const allEndpointsHandler = getAllEndpointsHandler(router);
+
+router.get('/all-endpoints', allEndpointsHandler);
 // router.use("/main/v1", ridesApi);
 router.use("/products/v1", productApi);
 router.use("/cart/v1", cartApi);
