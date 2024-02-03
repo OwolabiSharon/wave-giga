@@ -2,7 +2,7 @@ import Vendor from '../models/sellers/vendor.model';
 import httpStatus from 'http-status';
 import ApiError from '../utils/ApiError';
 import ApiResponse from 'src/utils/ApiResponse';
-import { Schema } from 'mongoose';
+import mongoose, {ObjectId ,Schema} from 'mongoose';
 import { EventSender } from '../utils/eventSystem';
 import productService from './product.service';
 
@@ -19,7 +19,7 @@ interface CreateUserPayload{
 }
 
 interface CreateVendorPayload {
-    userId?: Schema.Types.ObjectId ;
+    userId?: Schema.Types.ObjectId | string;
     createUserPayload?: CreateUserPayload;
     VendorName: string;
     normalizedName?: string;
@@ -27,13 +27,13 @@ interface CreateVendorPayload {
     location: { type: 'Point'; coordinates: [number, number] };
     email: string;
     KYC?: boolean;
-    KYCData?: Schema.Types.ObjectId;
+    KYCData?: Schema.Types.ObjectId | string;
     vendorType?: string;
-    BankDetails?: Schema.Types.ObjectId;
+    BankDetails?:Schema.Types.ObjectId | string;
 }
 
 interface UpdateVendorPayload {
-    vendorId: Schema.Types.ObjectId;
+    vendorId: Schema.Types.ObjectId | string;
     VendorName?: string;
     normalizedName?: string;
     phoneNumber?: string;
@@ -41,13 +41,13 @@ interface UpdateVendorPayload {
     email?: string;
     availability?: boolean;
     KYC?: boolean;
-    KYCData?: Schema.Types.ObjectId;
+    KYCData?: Schema.Types.ObjectId | string;
     vendorType?: string;
-    BankDetails?: Schema.Types.ObjectId;
+    BankDetails?: Schema.Types.ObjectId | string;
 }
 
 interface GetVendorPayload {
-    vendorId: Schema.Types.ObjectId;
+    vendorId: Schema.Types.ObjectId | string;
 }// works for all single vendor queries
 
 interface GetAllVendorsPayload {
@@ -56,17 +56,17 @@ interface GetAllVendorsPayload {
 }
 
 interface AddKYCPayload {
-    vendorId: Schema.Types.ObjectId;
-    KYCData: Schema.Types.ObjectId;
+    vendorId:Schema.Types.ObjectId | string;
+    KYCData:Schema.Types.ObjectId | string;
 }
 
 interface AddBankDetailsPayload {
-    vendorId: Schema.Types.ObjectId;
-    BankDetails: Schema.Types.ObjectId ;
+    vendorId:Schema.Types.ObjectId | string;
+    BankDetails:Schema.Types.ObjectId | string;
 }
 
 interface rateVendorPayload {
-    vendorId: Schema.Types.ObjectId;
+    vendorId:Schema.Types.ObjectId | string;
     rating: number;
 }
 
@@ -160,6 +160,15 @@ export class VendorService {
             if (!newVendor) {
                 throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Vendor could not be created');
             }
+            this.eventSender.sendEvent({
+                name: 'updateVendorStatus',
+                service: 'User',
+                payload: {
+                    userId: userId || newUserId,
+                    status: 'Activated'
+                },
+            });
+
     
             const response = {
                 success: true,
@@ -351,6 +360,8 @@ export class VendorService {
         try{
             const { vendorId, KYCData } = payload;
 
+        
+
             // Find the vendor by ID
             const vendor = await Vendor.findById(vendorId);
 
@@ -367,8 +378,8 @@ export class VendorService {
             if (!KYC) {
                 throw new ApiError(httpStatus.BAD_REQUEST, 'KYC does not exist');
             }
-            // Update the vendor's KYCData
-            vendor.KYCData = KYCData;
+            // push the KYC ObjectID to the vendor's KYCData
+            vendor.KYCData = KYCData as ObjectId;
             // Save the changes
             await vendor.save();
 
@@ -415,8 +426,9 @@ export class VendorService {
             if (!ConfirmBankDetails) {
                 throw new ApiError(httpStatus.BAD_REQUEST, 'BankDetails does not exist');
             }
-            // Update the vendor's BankDetails
-            vendor.BankDetails = BankDetails;
+            // check if it is an ObjectID else convert it to an ObjectID
+            
+            vendor.BankDetails = BankDetails as ObjectId;
     
             // Save the changes
             await vendor.save();
@@ -472,9 +484,12 @@ export class VendorService {
             };
             //remove vendor status from user do not await a response
             this.eventSender.sendEvent({
-                name: 'removeVendorStatus',
+                name: 'updateVendorStatus',
                 service: 'user',
-                payload: { userId: vendor.user },
+                payload: { 
+                    userId: vendor.user,
+                    status: 'DeActivated' 
+                },
             });
 
             return new ApiResponse(httpStatus.OK, response);
@@ -516,7 +531,18 @@ export class VendorService {
                 data: {
                     message: 'Vendor blacklisted successfully',
                 },
-            };            
+            };  
+            
+            this.eventSender.sendEvent({
+                name:'sendEmail',
+                service: 'User',
+                payload: {
+                    email: vendor.email,
+                    subject: 'Account Deactivation',
+                    message: 'Your account has been Blacklisted due to multiple reports please contact the admin for more information to appeal this decision',
+                },
+
+            });
 
             return new ApiResponse(httpStatus.OK, response);
         } catch (error:any) {
@@ -557,7 +583,18 @@ export class VendorService {
                 data: {
                     message: 'Vendor unblacklisted successfully',
                 },
-            };            
+            };   
+            
+            this.eventSender.sendEvent({
+                name:'sendEmail',
+                service: 'User',
+                payload: {
+                    email: vendor.email,
+                    subject: 'Account Deactivation',
+                    message: 'Your account has been unblacklisted',
+                },
+
+            });
             return new ApiResponse(httpStatus.OK, response);
         } catch (error:any) {
             console.error('Error removing subcategory from category:', error.message);

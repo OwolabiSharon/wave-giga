@@ -8,7 +8,7 @@ interface Event {
 
 interface ServiceUrlDict {
     [key: string]: string;
-  }
+}
 
 export class EventSender {
     private serviceUrlDict: ServiceUrlDict;

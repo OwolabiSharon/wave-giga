@@ -206,7 +206,7 @@ export class VendorController {
 
     public async rateVendor(req: Request, res: Response) {
         try {
-            const payload = VendorZod.GetVendorPayload.parse(req.params);
+            const payload = VendorZod.RateVendorPayload.parse(req.params);
             const response = await VendorService.rateVendor(payload);
             res.status(response.status).json(response);
         }catch (error: any) {

@@ -27,7 +27,7 @@ interface IVendor extends Document {
 interface IVendorModel extends Model<IVendor> {
     isVendorNameTaken(vendorName:string): Promise<boolean>;
     isPhoneNumberTaken(phoneNumber:string): Promise<boolean>;
-    calculateAverageRating(vendorId: Schema.Types.ObjectId, newRating: number): Promise<number>;
+    calculateAverageRating(vendorId: Schema.Types.ObjectId | string, newRating: number): Promise<number>;
 }
 
 const vendorSchema = new Schema<IVendor>({

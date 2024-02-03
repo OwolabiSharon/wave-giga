@@ -1,9 +1,12 @@
 import { Router } from 'express';
 import VendorController from '../controllers/vendor.controller';
+import { getAllEndpointsHandler } from '../utils/endpointsUtil';
 
 
 const router = Router();
+const allEndpointsHandler = getAllEndpointsHandler(router);
 
+router.get('/all-endpoints', allEndpointsHandler);//this is for testing purposes only
 router.post('/', VendorController.createVendor);
 router.get('/', VendorController.getAllVendors);
 router.get('/info', VendorController.getAllVendorsInfo);

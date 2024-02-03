@@ -40,13 +40,15 @@ const CreateVendorPayload = z.object({
 });
 
 const UpdateVendorPayload = z.object({
-    vendorId: z.unknown().optional(),
+    vendorId: z.string().refine(value => mongoose.Types.ObjectId.isValid(value) || typeof value === 'string', {
+        message: "Invalid vendorId",
+    }),
     VendorName: z.string().optional(),
     normalizedName: z.string().optional(),
     phoneNumber: z.string().optional(),
     location: z.object({
         type: z.literal('Point'),
-        coordinates: z.tuple([z.number(), z.number()]).optional(),
+        coordinates: z.tuple([z.number(), z.number()])
     }).optional(),
     email: z.string().email().optional(),
     availability: z.boolean().optional(),
@@ -72,21 +74,27 @@ const GetAllVendorsPayload = z.object({
 });
 
 const AddKYCPayload = z.object({
-    vendorId: GetVendorPayload,
+    vendorId:  z.string().refine(value => mongoose.Types.ObjectId.isValid(value) || typeof value === 'string', {
+        message: "Invalid vendorId",
+    }),
     KYCData: z.string().refine(value => mongoose.Types.ObjectId.isValid(value) || typeof value === 'string', {
         message: "Invalid KYCData",
     }),
 });
 
 const AddBankDetailsPayload = z.object({
-    vendorId: GetVendorPayload,
+    vendorId:  z.string().refine(value => mongoose.Types.ObjectId.isValid(value) || typeof value === 'string', {
+        message: "Invalid vendorId",
+    }),
     BankDetails: z.string().refine(value => mongoose.Types.ObjectId.isValid(value) || typeof value === 'string', {
         message: "Invalid BankDetails",
     }),
 });
 
 const RateVendorPayload = z.object({
-    vendorId: GetVendorPayload,
+    vendorId: z.string().refine(value => mongoose.Types.ObjectId.isValid(value) || typeof value === 'string', {
+        message: "Invalid vendorId",
+    }),
     rating: z.number().positive(),
 });
 

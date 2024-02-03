@@ -12,7 +12,8 @@ class ProductController {
 
     public getAll = async (req: Request, res: Response): Promise<void> => {
         try {
-            const response = await this.productService.getAllProducts();
+            const payload = ProductSchema.getPopularProductsSchema.parse(req.query);
+            const response = await this.productService.getAllProducts(payload);
             res.status(response.status).json(response);
         } catch (error: any) {
             console.error('Error getting all products:', error.message);
