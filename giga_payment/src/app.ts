@@ -6,7 +6,6 @@ import httpStatus from 'http-status';
 import router from './routes/routesConfig';
 import cors from 'cors';
 import { errorConverter, errorHandler } from './middleware/error';
-import rabbit from './rabbitMq/rabbitmq.services';
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -35,7 +34,6 @@ mongoose.connection.on('open', () => {
   console.log('Mongoose Connection');
 });
 
-rabbit.payFee()
 
 app.use(errorConverter);
 app.use(errorHandler);

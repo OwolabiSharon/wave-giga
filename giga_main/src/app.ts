@@ -35,7 +35,6 @@ admin.createAdmin({
   password: "defaultPass"
 }) 
 
-
 app.use(errorConverter);
 app.use(errorHandler);
 

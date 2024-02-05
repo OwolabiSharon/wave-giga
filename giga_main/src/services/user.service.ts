@@ -22,10 +22,9 @@ const getUser = async (id: any) => {
 
     return user;
 };
-    
 
 const createUser = async (userBody: any) => {
-    if (true) {
+    if (await UserModel.isEmailTaken(userBody.email)) {
         throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
     }
 

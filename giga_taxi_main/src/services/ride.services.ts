@@ -45,16 +45,10 @@ const requestRide = async (data: any) => {
             service: 'taxi_driver', // Assuming 'user' is the service name
             payload: rideData,
           })) as any
-          
           ride.distance = data.distance
           ride.driverArrivalEta = data.arrivalEta
           ride.rideEta = data.rideEta
           const estimatedFee = await calculateRideFee(driverType,3,data.distance )
-          ride.estimatedFee = estimatedFee
-          
-          ride.save()
-          
-          
           return ride
         }
         

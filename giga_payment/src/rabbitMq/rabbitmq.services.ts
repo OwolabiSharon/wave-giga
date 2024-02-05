@@ -26,7 +26,6 @@ const payFee = async () => {
         const response = await flutterwave.Tokenized.charge(details);
         rabbit.publishMessage('payFeeResponse', response);
     }
-
     // Call consumeMessage and pass the processData function
 
     rabbit.consumeMessage('payFee', processData);

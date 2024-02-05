@@ -3,7 +3,6 @@ import mongoose from 'mongoose';
 import * as dotEnv from 'dotenv';
 import ApiError from './utils/ApiError';
 import httpStatus from 'http-status';
-import rabbit from './rabbitMq/rabbitmq.services';
 import router from './routes/routesConfig';
 import cors from 'cors';
 import { errorConverter, errorHandler } from './middleware/error';
@@ -30,9 +29,6 @@ mongoose.connect(process.env.DB_HOST as string).catch((e) => {
 mongoose.connection.on('open', () => {
   console.log('Mongoose Connection');
 });
-
-rabbit.GetRideOffer()
-rabbit.getClosestDrivers()
 
 app.use(errorConverter);
 app.use(errorHandler);

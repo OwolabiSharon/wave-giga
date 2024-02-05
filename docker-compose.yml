@@ -21,7 +21,7 @@ services:
     build: ./giga_taxi_main
     ports:
       - "5000:5000"
-    depends_on:  
+    depends_on:
       - rabbitmq
   gigataxidriver:
     build: ./giga_taxi_driver
@@ -35,5 +35,3 @@ services:
       - "7000:7000"
     depends_on:
       - rabbitmq
-
-  

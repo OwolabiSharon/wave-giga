@@ -26,6 +26,7 @@ router
 .route('/createAccount')
 .post(validate(validations.ride.createAccount), RideController.createAccount)
 
+<<<<<<< HEAD
 router
 .route('/getClosestDrivers')
 .post(RideController.getClosestDrivers)
@@ -34,5 +35,7 @@ router
 .route('/GetRideOffer')
 .post(RideController.GetRideOffer)
 
+=======
+>>>>>>> 8c3db42 (first commit)
  
 export default router;

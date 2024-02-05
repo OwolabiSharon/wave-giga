@@ -14,7 +14,6 @@ router
 .route('/login')
 .post(validate(validations.users.loginUser), UserController.loginUser)
 
-
 router
   .route('/getUser')
   .post(UserController.getUser)

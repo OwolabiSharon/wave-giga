@@ -12,10 +12,14 @@ router
 
 router
 .route('/validate')
+<<<<<<< HEAD
   .post(CreditCardController.validateTransaction)
 
 router
 .route('/payFee')
 .post(CreditCardController.payFee)
+=======
+.post(CreditCardController.validateTransaction)
+>>>>>>> 8c3db42 (first commit)
 
   export default router;
