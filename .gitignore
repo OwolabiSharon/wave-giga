@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> 7c69f99 (first commit)
 # Dependencies
 node_modules
 
@@ -17,6 +20,10 @@ yarn.lock
 
 # temporary files that cant be pushed yet (ci/cd)
 .github/workflows
+<<<<<<< HEAD
 ```
 .VSCodeCounter
 
+=======
+```
+>>>>>>> 7c69f99 (first commit)
