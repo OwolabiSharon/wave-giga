@@ -28,26 +28,8 @@ const addCard = async () => {
 
     rabbit.consumeMessage('addCard');
 };
+ 
 
-const getUser = async () => {
-    //function to do something with the data in the rabbit mq message(add card)
-    async function processData(data: any) {
-        // Perform custom actions with the data
-
-        const user = await UserModel.findById(data.userId);
-
-        if (!user) {
-            rabbit.publishMessage('getUserResponse', "user not found");
-        }
-        else{
-            rabbit.publishMessage('getUserResponse', user);
-        }
-    }
-    
-    // Call consumeMessage and pass the processData function
-
-    rabbit.consumeMessage('getUser', processData);
-};
 
 const rateUser = async () => {
     //function to do something with the data in the rabbit mq message(add card)
@@ -93,7 +75,6 @@ const createAccount = async () => {
 
 export default {
     addCard,
-    getUser,
     rateUser,
     createAccount
 };

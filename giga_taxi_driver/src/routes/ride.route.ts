@@ -26,5 +26,13 @@ router
 .route('/createAccount')
 .post(validate(validations.ride.createAccount), RideController.createAccount)
 
+router
+.route('/getClosestDrivers')
+.post(RideController.getClosestDrivers)
+
+router 
+.route('/GetRideOffer')
+.post(RideController.GetRideOffer)
+
  
 export default router;

@@ -3,7 +3,6 @@ import mongoose from 'mongoose';
 import * as dotEnv from 'dotenv';
 import router from './routes/routesConfig';
 import ApiError from './utils/ApiError';
-import rabbit from './rabbitMq/rabbitmq.services';
 import admin from './services/admin.service';
 import httpStatus from 'http-status';
 import cors from 'cors';
@@ -35,10 +34,7 @@ admin.createAdmin({
   email: "default@default.com",
   password: "defaultPass"
 }) 
-rabbit.addCard()
-rabbit.getUser()
-rabbit.rateUser() 
-rabbit.createAccount()
+
 
 app.use(errorConverter);
 app.use(errorHandler);

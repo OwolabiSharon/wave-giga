@@ -1,5 +1,4 @@
 import { Document, Model, model, Schema,Types } from 'mongoose';
-//call the rabbit queue to get the orders from the main module
 
 
 export interface IproductOrder extends Document {

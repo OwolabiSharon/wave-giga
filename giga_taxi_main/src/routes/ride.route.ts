@@ -21,6 +21,22 @@ router
 router
 .route('/createAccount')
 .post(validate(validations.ride.createAccount), RideController.createAccount)
+
+router
+.route('/payTaxiFee')
+.post(validate(validations.ride.payTaxiFee), RideController.payTaxiFee)
+
+router
+.route('/DriverEndTrip')
+.post(RideController.DriverEndTrip)
+
+router
+.route('/DriverAcceptRide')
+.post(RideController.DriverAcceptRide)
+
+router
+.route('/DriverRejectRide')
+.post(RideController.DriverRejectRide)
  
  
 export default router;

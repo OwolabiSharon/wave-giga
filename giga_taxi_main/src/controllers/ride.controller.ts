@@ -29,6 +29,21 @@ class RideController {
     const resp = await rideService.payTaxiFee(req.body);
     res.status(httpStatus.CREATED).send({ ...resp, status: true });
   });
+
+  DriverEndTrip = catchAsync(async (req: Request, res: Response) => {
+    const resp = await rideService.DriverEndTrip(req.body);
+    res.status(httpStatus.CREATED).send({ ...resp, status: true });
+  });
+
+  DriverAcceptRide = catchAsync(async (req: Request, res: Response) => {
+    const resp = await rideService.DriverAcceptRide(req.body);
+    res.status(httpStatus.CREATED).send({ ...resp, status: true });
+  });
+
+  DriverRejectRide = catchAsync(async (req: Request, res: Response) => {
+    const resp = await rideService.DriverRejectRide(req.body);
+    res.status(httpStatus.CREATED).send({ ...resp, status: true });
+  });
 }
 
 export default new RideController();

@@ -14,6 +14,11 @@ export class CreditCardController {
       res.status(httpStatus.CREATED).send({ message: 'Credit card added', data: creditCard, status: true });
   });
 
+  payFee = catchAsync(async (req: Request, res: Response) => {
+    const data = await creditCardService.payFee(req.body);
+    res.status(httpStatus.CREATED).send({ message: 'Payment Made', data, status: true });
+});
+
     // getCreditCard = catchAsync(async (req: Request, res: Response) => {
     //     const creditCard = await creditCardService.getUserById(req.params.userId);
     
