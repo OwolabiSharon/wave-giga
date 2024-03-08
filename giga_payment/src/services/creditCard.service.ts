@@ -5,7 +5,7 @@ import ApiError from '../utils/ApiError';
 import Flutterwave from 'flutterwave-node-v3';
 import { EventSender } from '../utils/eventSystem'; 
 
-const flutterwave = new Flutterwave('FLWPUBK_TEST-b84f980af3c945155bf845f2680028cc-X', 'FLWSECK_TEST-90782a4930b5c5eae4552ded6441098b-X');
+const flutterwave = new Flutterwave(process.env.FLW_PUBLIC_KEY, process.env.FLW_SECRET_KEY);
 const eventSender = new EventSender();
 
 interface ChargeDetails {
@@ -28,11 +28,12 @@ interface ChargeDetails {
 }
   
 const datas = generateTransactionReference
-console.log(datas);
+// console.log(datas);
 
 const createCard = async (cardNumber: string, cardHolderName: string, cardExpiryMonth: string, cardExpiryYear: string, cardCVV: string, email: string, pin: number)=> {
   // Create the credit card
   try {
+    const redirect_url=process.env.REDIRECT_URL_CREATE_CARD
     const details: ChargeDetails = {
       card_number: cardNumber,
       cvv: cardCVV,
@@ -44,7 +45,7 @@ const createCard = async (cardNumber: string, cardHolderName: string, cardExpiry
       email,
         "tx_ref": generateTransactionReference(),
         "enckey": 'FLWSECK_TEST8f058b3579bb',
-      "redirect_url":"https://www,flutterwave.ng"
+      
   };
 
       const response = await flutterwave.Charge.card(details);

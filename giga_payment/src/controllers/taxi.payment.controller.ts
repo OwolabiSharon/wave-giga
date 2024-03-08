@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import httpStatus from 'http-status';
 import catchAsync from '../utils/catchAsync';
-import taxiService from '../services/taxi.payments.services';
+import taxiService from '../services/taxi.payments.service';
 
 export class TaxiController {
   payRideFee = catchAsync(async (req: Request, res: Response) => {
