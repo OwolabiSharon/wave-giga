@@ -1,9 +1,9 @@
-import { CreditCard, ICreditCard } from '../models/creditCard.model';
-import Rabbit from '../rabbitMq/setup';
+import { CreditCard, ICreditCard } from '../../../../wave-giga-waves-branch-2/giga_payment/src/models/creditCard.model';
+import Rabbit from '../../../../wave-giga-waves-branch-2/giga_payment/src/rabbitMq/setup';
 import httpStatus from 'http-status';
-import ApiError from '../utils/ApiError';
+import ApiError from '../../../../wave-giga-waves-branch-2/giga_payment/src/utils/ApiError';
 import Flutterwave from 'flutterwave-node-v3';
-import generateTransactionReference from '../utils/payment';
+import generateTransactionReference from '../../../../wave-giga-waves-branch-2/giga_payment/src/utils/payment';
 
 const flutterwave = new Flutterwave('FLWPUBK_TEST-b84f980af3c945155bf845f2680028cc-X', 'FLWSECK_TEST-90782a4930b5c5eae4552ded6441098b-X');
 

@@ -1,8 +1,8 @@
 import Flutterwave from 'flutterwave-node-v3';
-import { EventSender } from '../utils/eventSystem';
+import { EventSender } from '../../../../wave-giga-waves-branch-2/giga_payment/src/utils/eventSystem';
 import httpStatus from 'http-status';
-import generateTransactionReference from '../utils/payment';
-import ApiError from '../utils/ApiError';
+import generateTransactionReference from '../../../../wave-giga-waves-branch-2/giga_payment/src/utils/payment';
+import ApiError from '../../../../wave-giga-waves-branch-2/giga_payment/src/utils/ApiError';
 
 const flutterwave = new Flutterwave(process.env.FLW_PUBLIC_KEY, process.env.FLW_SECRET_KEY);
 const eventSender = new EventSender();
@@ -55,4 +55,43 @@ class chargeService {
             throw new ApiError(httpStatus.BAD_REQUEST, error.message);
         }
     }
-}
+
+    async transferFunds(payload: any) {
+        try {
+            const details = {
+                account_bank: payload.account_bank,
+                account_number: payload.account_number,
+                amount: payload.amount,
+                currency: "NGN",
+                narration: "Withdrawal from giga account",
+                reference: "withdrawal" + generateTransactionReference(),
+            };
+            const data = flutterwave.Transfer.initiate(details)
+                .then(console.log)
+                .catch(console.log);
+            return data
+        } catch (error:any) {
+            throw new ApiError(httpStatus.BAD_REQUEST, error.message);
+        }
+    }
+
+    async paymentWebhook(payload: any) {
+        try {
+            if (payload.event === "transfer.completed") {
+                eventSender.sendEvent({
+                    name: 'reduceBalance',
+                    service: 'eccommerce', // Assuming 'user' is the service name
+                    payload: {amount: payload.data.amount, account_number: payload.data.account_number },
+                })
+                
+                eventSender.sendEvent({
+                    name: 'reduceBalance',
+                    service: 'taxi_Driver', // Assuming 'user' is the service name
+                    payload: {amount: payload.data.amount, account_number: payload.data.account_number },
+                })
+            }
+        } catch (error:any) {
+            throw new ApiError(httpStatus.BAD_REQUEST, error.message);
+        }
+    }
+}  

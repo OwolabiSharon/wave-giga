@@ -1,9 +1,9 @@
-import { CreditCard, ICreditCard } from '../models/creditCard.model';
+import { CreditCard, ICreditCard } from '../../../../wave-giga-waves-branch-2/giga_payment/src/models/creditCard.model';
 import httpStatus from 'http-status';
-import generateTransactionReference from '../utils/payment';
-import ApiError from '../utils/ApiError';
+import generateTransactionReference from '../../../../wave-giga-waves-branch-2/giga_payment/src/utils/payment';
+import ApiError from '../../../../wave-giga-waves-branch-2/giga_payment/src/utils/ApiError';
 import Flutterwave from 'flutterwave-node-v3';
-import { EventSender } from '../utils/eventSystem'; 
+import { EventSender } from '../../../../wave-giga-waves-branch-2/giga_payment/src/utils/eventSystem'; 
 
 const flutterwave = new Flutterwave(process.env.FLW_PUBLIC_KEY, process.env.FLW_SECRET_KEY);
 const eventSender = new EventSender();
@@ -111,6 +111,23 @@ const payFee = async (data: any) => {
         narration: data.narration,
     };
   const response = await flutterwave.Tokenized.charge(details);
+  if (response.status === "success") {
+    if (data.payment_type === "taxi") {
+      eventSender.sendEvent({
+        name: 'increaseBalance',
+        service: 'taxi_Drive', // Assuming 'user' is the service name
+        payload: {id: data.id, amount: data.amount },
+      })
+    } else if (data.payment_type === "ecommerce") {
+      eventSender.sendEvent({
+        name: 'increaseBalance',
+        service: 'ecommerce', // Assuming 'user' is the service name
+        payload: {id: data.id, amount: data.amount },
+      })
+    }
+  }
+  
+  
   return response;
   }
 
