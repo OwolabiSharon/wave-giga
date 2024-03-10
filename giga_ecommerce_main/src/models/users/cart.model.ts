@@ -53,10 +53,9 @@ CartSchema.methods.getTotalPrice = function (this: ICart): number {
 
 CartSchema.statics.getCartByUserId = async function (userId: string) {
     const cart = await this.findOne({ userId }).populate('items.productId', 'name price'); // Adjust the fields as needed
-    return cart?.toObject(); // Convert to plain JavaScript object
+    return cart?.toObject(); // Convert to a plain JavaScript object
 };
 
-const Cart = model<ICart, ICartModel>('Cart', CartSchema);
+const CartModel: Model<ICart> & ICartModel = model<ICart, ICartModel>('Cart', CartSchema);
 
-export default Cart;
-
+export default CartModel;

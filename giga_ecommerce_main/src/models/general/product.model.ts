@@ -1,5 +1,5 @@
-import { AnyExpression, Document, Model, model, Schema,Types } from 'mongoose';
-import Review, { IReview } from '../users/reviews.model'; 
+import { Document, Model, model, Schema,Types } from 'mongoose';
+import Review from '../users/reviews.model'; 
 
 export interface IProduct extends Document {
     vendor: Schema.Types.ObjectId;

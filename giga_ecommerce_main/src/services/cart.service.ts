@@ -342,6 +342,7 @@ export class CartService {
 
     public async checkout(payload: CheckoutPayload): Promise<ApiResponse<any>> {
         try{
+            //change the function so that a new cart is generated to replace the old cart for the user
             const { userId, paymentMethod, shippingAddress } = payload;
             let cart = await Cart.findOne({ userId });
 
@@ -352,7 +353,7 @@ export class CartService {
             //get the total price of the cart
             const totalPrice = cart.getTotalPrice();
 
-            //use emmiter to send event to payment service
+            //use emmiter to send event to payment service , change this because the payment service might produce a link
             const CheckOutStatus= this.eventSender.sendEvent({
                 service: 'payment',
                 name: 'createPayment',

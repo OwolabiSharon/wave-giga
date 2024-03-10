@@ -1,7 +1,7 @@
 import { Router } from "express";
 import productApi from "./products.routes";
 import cartApi from "./cart.routes";
-import sellerApi from "./vendor.route";
+import sellerApi from "./vendor.routes";
 import categoryApi from "./category.routes";
 import { getAllEndpointsHandler } from '../utils/endpointsUtil';
 

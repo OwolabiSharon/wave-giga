@@ -30,13 +30,13 @@ To utilize the `Product` model in your application, follow these steps:
 
 1. **Import the Product Model:**
 
-   ```javascript
+   ```Typescript
    import Product from './models/Product';
    ```
 
 2. **Creating and Saving a Product:**
 
-   ```javascript
+   ```Typescript
    const product = new Product({
      // ... (provide product details)
    });
@@ -46,20 +46,20 @@ To utilize the `Product` model in your application, follow these steps:
 
 3. **Retrieving a Product:**
 
-   ```javascript
+   ```Typescript
    const product = await Product.findById('<product_id>');
    ```
 
 4. **Modifying Product Details:**
 
-   ```javascript
+   ```Typescript
    product.productName = 'New Product Name';
    await product.save();
    ```
 
 5. **Querying for Products:**
 
-   ```javascript
+   ```Typescript
    const products = await Product.find({ productCategory: 'Clothing' });
    ```
 
@@ -69,7 +69,7 @@ The `productReviews` field in the `Product` model allows you to associate produc
 
 - **Associating a Review:**
 
-  ```javascript
+  ```Typescript
   const product = await Product.findById('<product_id>');
   product.productReviews.push('<review_id>');
   await product.save();
@@ -77,7 +77,7 @@ The `productReviews` field in the `Product` model allows you to associate produc
 
 - **Retrieving Reviews:**
 
-  ```javascript
+  ```Typescript
   const product = await Product.findById('<product_id>');
   const reviews = await Product.find({ _id: { $in: product.productReviews } });
   ```

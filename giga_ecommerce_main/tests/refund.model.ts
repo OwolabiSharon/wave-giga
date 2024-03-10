@@ -7,6 +7,7 @@ interface IRefund extends Document {
     sellerId: Schema.Types.ObjectId;
     reason: string;
     refundDate: Date;
+    refundAmount: number;
     status: string;
 }
 
