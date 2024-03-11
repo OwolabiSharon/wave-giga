@@ -1,9 +1,9 @@
-import Driver from '../../../../wave-giga-waves-branch-2/giga_taxi_driver/src/models/taxiDriver.model';
-import Ride from '../../../../wave-giga-waves-branch-2/giga_taxi_driver/src/models/ride.model';
+import Driver from '../models/taxiDriver.model';
+import Ride from '../models/ride.model';
 import httpStatus from 'http-status';
-import { EventSender } from '../../../../wave-giga-waves-branch-2/giga_taxi_driver/src/utils/eventSystem'; 
-import ApiError from '../../../../wave-giga-waves-branch-2/giga_taxi_driver/src/utils/ApiError';
-import tomtomApiServices from '../../../../wave-giga-waves-branch-2/giga_taxi_driver/src/services/tomtomApi.services';
+import { EventSender } from '../utils/eventSystem'; 
+import ApiError from '../utils/ApiError';
+import tomtomApiServices from '../services/tomtomApi.services';
 const eventSender = new EventSender();
 
 

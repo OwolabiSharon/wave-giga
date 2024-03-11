@@ -1,9 +1,9 @@
-import Vendor from '../../../../wave-giga-waves-branch-2/giga_ecommerce_main/src/models/sellers/vendor.model';
+import Vendor from '../models/sellers/vendor.model';
 import httpStatus from 'http-status';
-import ApiError from '../../../../wave-giga-waves-branch-2/giga_ecommerce_main/src/utils/ApiError';
-import ApiResponse from 'src/utils/ApiResponse';
+import ApiError from '../utils/ApiError';
+import ApiResponse from '../utils/ApiResponse';
 import mongoose, {ObjectId ,Schema} from 'mongoose';
-import { EventSender } from '../../../../wave-giga-waves-branch-2/giga_ecommerce_main/src/utils/eventSystem';
+import { EventSender } from '../utils/eventSystem';
 
 
 export class PaymentService {
@@ -19,10 +19,10 @@ export class PaymentService {
             if (vendor) {
                 vendor.earnings = vendor.earnings + payload.amount;
                 await vendor.save();
-          
+
                 return vendor;
               } else {
-                throw new ApiError(httpStatus.BAD_REQUEST, 'Selected ride is not in ride offers');
+                throw new ApiError(httpStatus.BAD_REQUEST, 'Seller not found');
               }
         } catch (error:any) {
             console.log(error)
@@ -51,7 +51,7 @@ export class PaymentService {
         try{
             this.eventSender.sendEvent({
                 name: 'transferFunds',
-                service: 'payment', // Assuming 'user' is the service name
+                service: 'payment', 
                 payload: { account_bank: data.account_bank, account_number: data.account_number, amount: data.amount }
             });
             return { message: "Pending" }
