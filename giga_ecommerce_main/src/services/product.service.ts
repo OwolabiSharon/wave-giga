@@ -1,6 +1,7 @@
 import SubCategory from "../models/general/subCategory.model";
 import Category from "../models/general/category.model";
 import Product from "../models/general/product.model";
+import vendor from "../models/sellers/vendor.model";
 import Review from "../models/users/reviews.model";
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
@@ -112,6 +113,7 @@ export class ProductService {
             //if vendor exists
 
             // Additional validation or business logic before creating the product
+
     
             const product = await Product.create({ vendor, productName, productDisplayName, productDescription, productCategory, productSubCategory, productImages, productPrice, productAmountInStock, productFulfilmentTime });
 
