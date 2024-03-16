@@ -22,6 +22,9 @@ export class RefundService {
             if (sellersOrder) {
                 const order = await OrderModel.findOne({ _id: sellersOrder.orderId });
 
+                if (!order) {
+                    throw new ApiError(httpStatus.BAD_REQUEST, 'Order not found in OrderModel');
+                }
                 //pay the order
                 this.eventSender.sendEvent({
                     name: 'refundUser',
