@@ -85,6 +85,6 @@ vendorSchema.statics.calculateAverageRating = async function (vendorId: Schema.T
     return newAverageRating;
 };
 
-const vendor: IVendorModel = model<IVendor, IVendorModel>('vendor', vendorSchema);
+const vendor = model<IVendor, IVendorModel>('vendor', vendorSchema);
 export default vendor;
 

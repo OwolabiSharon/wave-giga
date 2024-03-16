@@ -1,8 +1,8 @@
 import Flutterwave from 'flutterwave-node-v3';
-import { EventSender } from '../../../../wave-giga-waves-branch-2/giga_payment/src/utils/eventSystem';
+import { EventSender } from '../utils/eventSystem';
 import httpStatus from 'http-status';
-import generateTransactionReference from '../../../../wave-giga-waves-branch-2/giga_payment/src/utils/payment';
-import ApiError from '../../../../wave-giga-waves-branch-2/giga_payment/src/utils/ApiError';
+import generateTransactionReference from '../utils/payment';
+import ApiError from '../utils/ApiError';
 
 const flutterwave = new Flutterwave(process.env.FLW_PUBLIC_KEY, process.env.FLW_SECRET_KEY);
 const eventSender = new EventSender();

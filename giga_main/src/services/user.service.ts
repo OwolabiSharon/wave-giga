@@ -5,8 +5,9 @@ import jwt from 'jsonwebtoken';
 import ApiError from '../utils/ApiError';
 import moment from 'moment';
 import { randomString } from '../utils/util';
+import { EventSender } from '../utils/eventSystem'; 
 
-
+const eventSender = new EventSender();
 const getUserByEmail = async (email: any) => {
     const user = await UserModel.findOne({ email });
 
@@ -25,7 +26,7 @@ const getUser = async (id: any) => {
     
 
 const createUser = async (userBody: any) => {
-    if (true) {
+    if (await UserModel.isEmailTaken(userBody.userName)) {
         throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
     }
 
@@ -196,6 +197,46 @@ const createTaxiAccount = async (data: any) => {
     }
 }
 
+const addBankDetails = async (data: any) => {
+
+  const user = await UserModel.findById(data.id);
+
+  if (!user) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User deos not exist');
+  }
+  else{
+    const response = (eventSender.sendEvent({
+      name: 'createAccountDetails',
+      service: 'payment', // Assuming 'user' is the service name
+      payload: data,
+    })) as any
+
+    return response
+  }
+}
+
+const refundUser = async (data: any) => {
+
+  const user = await UserModel.findById(data.id).populate('AccountNumber');;
+
+  if (!user) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User deos not exist');
+  }
+  else{
+    const response = (eventSender.sendEvent({
+      name: 'transferFunds',
+      service: 'payment', // Assuming 'user' is the service name
+      payload: {
+        account_bank: user.AccountNumber.accountNumber,
+        account_number: user.AccountNumber.bankName ,
+        amount: data.amount
+      },
+    })) as any
+
+    return response
+  }
+}
+
 
 export default {
     createUser,
@@ -208,4 +249,6 @@ export default {
     addCard,
     rateUser,
     createTaxiAccount,
+  addBankDetails,
+  refundUser
   };

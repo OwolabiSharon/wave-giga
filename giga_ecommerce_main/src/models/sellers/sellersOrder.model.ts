@@ -25,4 +25,4 @@ const SellerOrderSchema: Schema = new Schema({
 
 const SellerOrderModel: Model<ISellerOrder> = model<ISellerOrder>('SellerOrder', SellerOrderSchema);
 
-export { SellerOrderModel };
+export default SellerOrderModel ; 

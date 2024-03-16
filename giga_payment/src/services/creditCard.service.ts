@@ -1,9 +1,10 @@
-import { CreditCard, ICreditCard } from '../../../../wave-giga-waves-branch-2/giga_payment/src/models/creditCard.model';
+import { CreditCard, ICreditCard } from '../models/creditCard.model';
+import { AccountNumber, IAccountNumber} from '../models/account.model';
 import httpStatus from 'http-status';
-import generateTransactionReference from '../../../../wave-giga-waves-branch-2/giga_payment/src/utils/payment';
-import ApiError from '../../../../wave-giga-waves-branch-2/giga_payment/src/utils/ApiError';
+import generateTransactionReference from '../utils/payment';
+import ApiError from '../utils/ApiError';
 import Flutterwave from 'flutterwave-node-v3';
-import { EventSender } from '../../../../wave-giga-waves-branch-2/giga_payment/src/utils/eventSystem'; 
+import { EventSender } from '../utils/eventSystem'; 
 
 const flutterwave = new Flutterwave(process.env.FLW_PUBLIC_KEY, process.env.FLW_SECRET_KEY);
 const eventSender = new EventSender();
@@ -129,11 +130,27 @@ const payFee = async (data: any) => {
   
   
   return response;
-  }
+}
+
+const createAccountDetails = async (data: any) => {
+  
+  const accountDetails = {
+    userId: data.id,
+    accountName: data.accountName,
+    accountNumber: data.accountNumber,
+    currencyType: "NGN",
+    bankName: data.bankName
+  };
+
+  const response = await AccountNumber.create(accountDetails);
+  
+  return response;
+};
 
 
 export default {
     createCard, 
     validateTransaction,
-    payFee
+  payFee,
+  createAccountDetails
 };

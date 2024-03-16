@@ -27,11 +27,12 @@ const accountNumberSchema = new mongoose.Schema<IAccountNumber>({
     },
     accountNumber: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     accountBalance: {
         type: Number,
-        required: true
+        required: false
     },
     currencyType: {
         type: String,
@@ -45,6 +46,6 @@ const accountNumberSchema = new mongoose.Schema<IAccountNumber>({
     timestamps: true
 });
 
-const accountNumber: IAccountNumberModel = mongoose.model<IAccountNumber, IAccountNumberModel>('AccountNumber', accountNumberSchema);
+const AccountNumber = mongoose.model<IAccountNumber, IAccountNumberModel>('AccountNumber', accountNumberSchema);
 
-export default accountNumber;
+export { AccountNumber, IAccountNumber, IAccountNumberModel };

@@ -169,7 +169,7 @@ const payTaxiFee = async (data: any) => {
     eventSender.sendEvent({
       name: 'payFee',
       service: 'payment', // Assuming 'user' is the service name
-      payload: {token: data.token, amount: data.amount, narration: data.narration},
+      payload: {token: data.token, amount: data.amount, narration: data.narration, id: data.driverId, payment_type: "taxi"},
     })
     return taxiCustomer;
   } catch (error) {
