@@ -6,9 +6,12 @@ interface IHotel extends Document {
     location: string;
     numberOfRooms: number;
     amenities: string[];
+    reviews: Schema.Types.ObjectId[];
+    starRating: number;
 }
 
 interface IHotelModel extends mongoose.Model<IHotel> {
+    
 }
 
 const HotelSchema: Schema = new Schema({
@@ -17,7 +20,10 @@ const HotelSchema: Schema = new Schema({
     location: { type: String, required: true },
     numberOfRooms: { type: Number, required: true },
     amenities: { type: [String], required: true },
+    reviews: { type: [Schema.Types.ObjectId], ref: 'Review' },
+    starRating: { type: Number, required: true , default: 0}
 });
+
 
 const Hotel : IHotelModel = mongoose.model<IHotel, IHotelModel>('Hotel', HotelSchema);
 
