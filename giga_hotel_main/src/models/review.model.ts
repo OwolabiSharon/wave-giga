@@ -42,6 +42,31 @@ ReviewSchema.post('save', function (doc: IReview) {
     });
 });
 
+//on delete of a review, update the hotel rating
+ReviewSchema.post('remove', function (doc: IReview) {
+    const Hotel = mongoose.model('Hotel');
+    Hotel.findById(doc.hotelId, (err: any, hotel: {
+        save(): unknown; starRating: number; 
+}) => {
+        if (err) {
+            console.log(err);
+        } else {
+            Hotel.find({hotelId: doc.hotelId}, (err: any, reviews: { rating: number; }[]) => {
+                if (err) {
+                    console.log(err);
+                } else {
+                    let totalRating = 0;
+                    reviews.forEach((review: { rating: number; }) => {
+                        totalRating += review.rating;
+                    });
+                    hotel.starRating = totalRating / reviews.length;
+                    hotel.save();
+                }
+            });
+        }
+    });
+});
+
 const Review: IReviewModel = mongoose.model<IReview, IReviewModel>('Review', ReviewSchema);
 
 export default Review;
