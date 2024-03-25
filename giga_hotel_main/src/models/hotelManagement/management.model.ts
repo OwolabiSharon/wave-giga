@@ -14,6 +14,8 @@ interface IManagementModel extends mongoose.Model<IManagement> {
 const ManagementSchema: Schema = new Schema({
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     hotelId: { type: Schema.Types.ObjectId, ref: 'Hotel', required: true },
+},{
+    timestamps: true
 });
 
 const Management: IManagementModel = mongoose.model<IManagement, IManagementModel>('Management', ManagementSchema);

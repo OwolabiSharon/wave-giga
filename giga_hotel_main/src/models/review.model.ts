@@ -15,6 +15,8 @@ const ReviewSchema: Schema = new Schema({
     hotelId: { type: Schema.Types.ObjectId, ref: 'Hotel', required: true },
     rating: { type: Number, required: true , default: 0},
     comment: { type: String, required: true }
+},{
+    timestamps: true
 });
 
 //on save of a review, update the hotel rating
