@@ -89,9 +89,16 @@ class chargeService {
                     service: 'taxi_Driver', // Assuming 'user' is the service name
                     payload: {amount: payload.data.amount, account_number: payload.data.account_number },
                 })
+
+                eventSender.sendEvent({
+                    name: 'reduceBalance',
+                    service: 'hotel', // Assuming 'user' is the service name
+                    payload: {amount: payload.data.amount, account_number: payload.data.account_number },
+                })
             }
         } catch (error:any) {
             throw new ApiError(httpStatus.BAD_REQUEST, error.message);
         }
     }
 }  
+export default new chargeService();

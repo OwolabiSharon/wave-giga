@@ -6,7 +6,7 @@ interface IBooking extends Document {
     guestCount: number;
     checkIn: Date;
     checkOut: Date;
-    region: string;
+    //region: string;
     totalAmount: number;
     paymentId?: string;
     paymentStatus?: string;
@@ -24,7 +24,7 @@ const BookingSchema: Schema = new Schema({
     guestCount: { type: Number, required: true },
     checkIn: { type: Date, required: true },
     checkOut: { type: Date, required: true },
-    region: { type: String, required: true },
+    //region: { type: String, required: true },
     totalAmount: { type: Number, required: true },
     paymentId: { type: String },
     paymentStatus: { type: String },

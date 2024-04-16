@@ -17,31 +17,14 @@ export class CreditCardController {
   payFee = catchAsync(async (req: Request, res: Response) => {
     const data = await creditCardService.payFee(req.body);
     res.status(httpStatus.CREATED).send({ message: 'Payment Made', data, status: true });
+  });
+  
+  createAccountDetails = catchAsync(async (req: Request, res: Response) => {
+    const data = await creditCardService.createAccountDetails(req.body);
+    res.status(httpStatus.CREATED).send({ message: 'Account added', data, status: true });
 });
 
-    // getCreditCard = catchAsync(async (req: Request, res: Response) => {
-    //     const creditCard = await creditCardService.getUserById(req.params.userId);
-    
-    //     res.status(httpStatus.OK).send({ message: 'Credit card found', data: creditCard, status: true });
-    // });
-
-    // deleteCreditCard = catchAsync(async (req: Request, res: Response) => {
-    //     await creditCardService.deleteUserById(req.params.userId);
-    
-    //     res.status(httpStatus.OK).send({ message: 'Credit card deleted', status: true });
-    // });
-
-    // updateCreditCard = catchAsync(async (req: Request, res: Response) => {
-    //     const creditCard = await creditCardService.updateUserById(req.params.userId, req.body);
-    
-    //     res.status(httpStatus.OK).send({ message: 'Credit card updated', data: creditCard, status: true });
-    // });
-    // getAllCreditCards = catchAsync(async (req: Request, res: Response) => {
-    //     const creditCards = await creditCardService.getAllUsers();
-    
-    //     res.status(httpStatus.OK).send({ message: 'Credit cards found', data: creditCards, status: true });
-    // });
-
+   
 
 }
 

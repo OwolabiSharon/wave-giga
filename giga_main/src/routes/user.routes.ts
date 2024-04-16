@@ -29,5 +29,13 @@ router
 
 router
 .route('/createTaxiAccount')
-.post(UserController.createTaxiAccount)
+  .post(UserController.createTaxiAccount)
+
+  router
+.route('/addBankDetails')
+.post(UserController.addBankDetails)
+
+router
+.route('/refundUser')
+.post(UserController.refundUser)
 export default router;

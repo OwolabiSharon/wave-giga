@@ -109,7 +109,7 @@ const payFee = async (data: any) => {
         amount: data.amount,
         email: "generic@yahoo.com",
         tx_ref: generateTransactionReference(),
-        narration: data.narration,
+        narration: data.narration, 
     };
   const response = await flutterwave.Tokenized.charge(details);
   if (response.status === "success") {
@@ -123,6 +123,13 @@ const payFee = async (data: any) => {
       eventSender.sendEvent({
         name: 'increaseBalance',
         service: 'ecommerce', // Assuming 'user' is the service name
+        payload: {id: data.id, amount: data.amount },
+      })
+    }
+    else if (data.payment_type === "hotel") {
+      eventSender.sendEvent({
+        name: 'increaseBalance',
+        service: 'hotel', // Assuming 'user' is the service name
         payload: {id: data.id, amount: data.amount },
       })
     }

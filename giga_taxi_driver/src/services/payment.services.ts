@@ -46,7 +46,7 @@ const increaseBalance = async (data: any) =>
   }
     
   }
-
+ 
   const withdrawEarnings = async(data: any) => 
     {  
         try {

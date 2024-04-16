@@ -1,4 +1,4 @@
-import Vendor from '../models/sellers/vendor.model';
+import HotelModel from '../models/hotel.model';
 import httpStatus from 'http-status';
 import ApiError from '../utils/ApiError';
 import ApiResponse from '../utils/ApiResponse';
@@ -15,12 +15,12 @@ export class PaymentService {
 
     public async increaseBalance(payload: any) {
         try{
-            const vendor = await Vendor.findOne({ _id: payload.id });
-            if (vendor) {
-                vendor.earnings = vendor.earnings + payload.amount;
-                await vendor.save();
+            const hotel = await HotelModel.findOne({ _id: payload.id });
+            if (hotel) {
+                hotel.earnings = hotel.earnings + payload.amount;
+                await hotel.save();
 
-                return vendor;
+                return hotel;
               } else {
                 throw new ApiError(httpStatus.BAD_REQUEST, 'Seller not found');
               }
@@ -32,12 +32,12 @@ export class PaymentService {
 
     public async reduceBalance(payload: any) {
         try{
-            const vendor = await Vendor.findOne({ account_number: payload.account_number });//depending on how you structure the db
-            if (vendor) {
-                vendor.earnings = vendor.earnings - payload.amount;
-                await vendor.save();
+            const hotel = await HotelModel.findOne({ account_number: payload.account_number });//depending on how you structure the db
+            if (hotel) {
+                hotel.earnings = hotel.earnings - payload.amount;
+                await hotel.save();
           
-                return vendor;
+                return hotel;
               } else {
                 return("user not found")
               }

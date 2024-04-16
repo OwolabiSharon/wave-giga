@@ -56,6 +56,16 @@ class UserController {
     const resp = await userService.createTaxiAccount(req.body);
     res.status(httpStatus.CREATED).send({ ...resp, status: true });
   });
+
+  addBankDetails = catchAsync(async (req: Request, res: Response) => {
+    const resp = await userService.addBankDetails(req.body);
+    res.status(httpStatus.CREATED).send({ ...resp, status: true });
+  });
+
+  refundUser = catchAsync(async (req: Request, res: Response) => {
+    const resp = await userService.refundUser(req.body);
+    res.status(httpStatus.CREATED).send({ ...resp, status: true });
+  });
 }
 
 export default new UserController();

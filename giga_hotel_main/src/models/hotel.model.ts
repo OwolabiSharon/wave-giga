@@ -1,10 +1,15 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
+interface Location {
+    state: string;
+    town: string;
+}
+
 interface IHotel extends Document {
     name: string;
     tagLine: string;// where they keep their bio
     rooms: Schema.Types.ObjectId[];
-    location: string;
+    location: Location;
     numberOfRooms: number;
     amenities: string[];
     petFriendliness: boolean;
@@ -13,6 +18,7 @@ interface IHotel extends Document {
     starRating: number;
     socialMedia: string[];
     website: string;
+    earnings: number;
 }
 
 interface IHotelModel extends mongoose.Model<IHotel> {
@@ -23,7 +29,11 @@ const HotelSchema: Schema = new Schema({
     name: { type: String, required: true },
     tagLine: { type: String, required: true },
     rooms:{ type: [Schema.Types.ObjectId], ref: 'Room', required: true, default: []},
-    location: { type: String, required: true },
+    location: {
+        state: { type: String, required: true },
+        town: { type: String, required: true },
+        // You can add more properties as needed, like street, postal code, etc.
+    },
     numberOfRooms: { type: Number, required: true },
     amenities: { type: [String], required: true },
     petFriendliness: { type: Boolean, required: true },
@@ -31,7 +41,8 @@ const HotelSchema: Schema = new Schema({
     reviews: { type: [Schema.Types.ObjectId], ref: 'Review' },
     starRating: { type: Number, required: true , default: 0},
     socialMedia: { type: [String], required: true },
-    website: { type: String, required: true }
+    website: { type: String, required: true },
+    earnings: { type: Number, default: 0 },
 },{
     timestamps: true
 });
